@@ -1,0 +1,26 @@
+alias: "Мой Газ: Уведомление об отправленных показаниях"
+description: Уведомление об отправленных показаниях в сервис Мой Газ
+trigger:
+  - platform: event
+    event_type: mygas_send_readings_completed
+condition: []
+action:
+  - service: telegram_bot.send_message
+    data:
+      authentication: digest
+      parse_mode: markdown
+      title: >-
+        Показания для {{
+        device_attr(trigger.event.data.device_id,'name_by_user') or
+        device_attr(trigger.event.data.device_id, 'name') }} отправлены {{
+        now().strftime('%d-%m-%Y %H:%M') }}
+      message: "Показания: {{ trigger.event.data.readings }}"
+  - service: notify.persistent_notification
+    data:
+      title: >-
+        Показания для {{
+        device_attr(trigger.event.data.device_id,'name_by_user') or
+        device_attr(trigger.event.data.device_id, 'name') }} отправлены {{
+        now().strftime("%d-%m-%Y %H:%M") }}
+      message: "Показания: {{ trigger.event.data.readings }}"
+mode: single

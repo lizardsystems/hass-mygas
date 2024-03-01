@@ -1,0 +1,117 @@
+{
+  "title": "Мой Газ",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Укажите учетную запись сервиса Мой Газ",
+        "data": {
+          "password": "Пароль",
+          "username": "Логин"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Не удалось подключиться.",
+      "invalid_auth": "Ошибка аутентификации.",
+      "unknown": "Непредвиденная ошибка.",
+      "no_devices": "В аккаунте не найдено ни одного устройства."
+    },
+    "abort": {
+      "already_configured": "Этот аккаунт уже добавлен в Home Assistant.",
+      "reauth_successful": "Повторная аутентификация выполнена успешно."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Настройки",
+        "description": "Измените настройки интеграции",
+        "data": {
+          "auto_update": "Автоматическое обновление"
+        },
+        "data_description": {
+          "auto_update": "Автоматическое обновление данных раз в сутки по ночам"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "account": {
+        "name": "Лицевой счет"
+      },
+      "balance": {
+        "name": "Задолженность"
+      },
+      "current_timestamp": {
+        "name": "Последнее обновление"
+      },
+      "counter": {
+        "name": "Счетчик"
+      },
+      "average_rate": {
+        "name": "Средний расход"
+      },
+      "price": {
+        "name": "Цена за м³"
+      },
+      "readings_date": {
+        "name": "Дата показаний"
+      },
+      "readings": {
+        "name": "Показания"
+      },
+      "consumption": {
+        "name": "Потребление"
+      }
+    },
+    "button": {
+      "refresh": {
+        "name": "Обновить"
+      },
+      "get_bill": {
+        "name": "Получить счет"
+      }
+    }
+  },
+  "services": {
+    "refresh": {
+      "name": "Обновить",
+      "description": "Обновить данные из личного кабинета",
+      "fields": {
+        "device_id": {
+          "name": "Прибор учета",
+          "description": "Выберите прибор учета"
+        }
+      }
+    },
+    "get_bill": {
+      "name": "Получить счет",
+      "description": "Получить счет от Мой Газ",
+      "fields": {
+        "device_id": {
+          "name": "Прибор учета",
+          "description": "Выберите прибор учета"
+        },
+        "email": {
+          "name": "Электронная почта",
+          "description": "Отправить счет на электронную почту"
+        }
+      }
+    },
+    "send_readings": {
+      "name": "Отправить показания",
+      "description": "Отправить показания в Мой Газ",
+      "fields": {
+        "device_id": {
+          "name": "Прибор учета",
+          "description": "Выберите прибор учета"
+        },
+        "value": {
+          "name": "Показания",
+          "description": "Показания счетчика, м³"
+        }
+      }
+    }
+  }
+}

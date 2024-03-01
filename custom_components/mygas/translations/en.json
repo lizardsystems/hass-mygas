@@ -1,0 +1,117 @@
+{
+  "title": "My Gas",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configure My Gas",
+        "data": {
+          "username": "Username",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect",
+      "invalid_auth": "Invalid authentication",
+      "unknown": "Unexpected error",
+      "no_devices": "No devices found in account"
+    },
+    "abort": {
+      "already_configured": "Account is already configured",
+      "reauth_successful": "Re-authentication was successful"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Options",
+        "description": "Change integration options",
+        "data": {
+          "auto_update": "Auto update"
+        },
+        "data_description": {
+          "auto_update": "Automatic data update every day at night"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "account": {
+        "name": "Account"
+      },
+      "balance": {
+        "name": "Balance"
+      },
+      "current_timestamp": {
+        "name": "Last Data Update"
+      },
+      "counter": {
+        "name": "Meter"
+      },
+      "average_rate": {
+        "name": "Average Rate"
+      },
+      "price": {
+        "name": "Price"
+      },
+      "readings_date": {
+        "name": "Readings Date"
+      },
+      "readings": {
+        "name": "Readings"
+      },
+      "consumption": {
+        "name": "Consumption"
+      }
+    },
+    "button": {
+      "refresh": {
+        "name": "Refresh"
+      },
+      "get_bill": {
+        "name": "Get Bill"
+      }
+    }
+  },
+  "services": {
+    "refresh": {
+      "name": "Refresh",
+      "description": "Refresh data from account",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "Select My Gas metering device"
+        }
+      }
+    },
+    "get_bill": {
+      "name": "Get Bill",
+      "description": "Get a bill from My Gas",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "Select My Gas metering device"
+        },
+        "email": {
+          "name": "Email",
+          "description": "Send a bill to email"
+        }
+      }
+    },
+    "send_readings": {
+      "name": "Send Readings",
+      "description": "Send readings to My Gas",
+      "fields": {
+        "device_id": {
+          "name": "Device",
+          "description": "Select My Gas metering device"
+        },
+        "value": {
+          "name": "Readings",
+          "description": "Meter readings, m³"
+        }
+      }
+    }
+  }
+}

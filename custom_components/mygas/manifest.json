@@ -1,0 +1,23 @@
+{
+  "domain": "mygas",
+  "name": "MyGas",
+  "codeowners": [
+    "@lizardsystems"
+  ],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/lizardsystems/hass-mygas",
+  "homekit": {},
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/lizardsystems/hass-mygas/issues",
+  "loggers": [
+    "aiomygas",
+    "mygas"
+  ],
+  "requirements": [
+    "aiomygas==2.3.0"
+  ],
+  "ssdp": [],
+  "version": "1.1.0",
+  "zeroconf": []
+}
