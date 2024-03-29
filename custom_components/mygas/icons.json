@@ -1,0 +1,46 @@
+{
+  "entity": {
+    "sensor": {
+      "account": {
+        "default": "mdi:identifier"
+      },
+      "balance": {
+        "default": "mdi:cash"
+      },
+      "current_timestamp": {
+        "default": "mdi:update"
+      },
+      "counter": {
+        "default": "mdi:meter-gas-outline"
+      },
+      "average_rate": {
+        "default": "mdi:gas-burner"
+      },
+      "price": {
+        "default": "mdi:cash"
+      },
+      "readings_date": {
+        "default": "mdi:calendar"
+      },
+      "readings": {
+        "default": "mdi:counter"
+      },
+      "consumption": {
+        "default": "mdi:speedometer"
+      }
+    },
+    "button": {
+      "refresh": {
+        "default": "mdi:refresh"
+      },
+      "get_bill": {
+        "default": "mdi:receipt-text-outline"
+      }
+    },
+    "services": {
+      "refresh": "mdi:refresh",
+      "get_bill": "mdi:receipt-text-outline",
+      "send_readings": "mdi:receipt-text-send-outline"
+    }
+  }
+}
