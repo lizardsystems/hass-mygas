@@ -36,11 +36,11 @@
       "get_bill": {
         "default": "mdi:receipt-text-outline"
       }
-    },
-    "services": {
-      "refresh": "mdi:refresh",
-      "get_bill": "mdi:receipt-text-outline",
-      "send_readings": "mdi:receipt-text-send-outline"
     }
+  },
+  "services": {
+    "refresh": "mdi:refresh",
+    "get_bill": "mdi:receipt-text-outline",
+    "send_readings": "mdi:receipt-text-send-outline"
   }
 }

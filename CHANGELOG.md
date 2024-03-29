@@ -8,3 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2024-02-19
 
 Первый публичный релиз.
+
+## [1.2.0] - 2024-03-29
+
+### Added 
+
+- Added icons.json
