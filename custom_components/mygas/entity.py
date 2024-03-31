@@ -24,14 +24,14 @@ from .coordinator import MyGasCoordinator
 from .helpers import _to_date, _to_int, _to_str, make_device_id
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class MyGasEntityDescriptionMixin:
     """Mixin for required MyGas base description keys."""
 
     value_fn: Callable[[MyGasBaseCoordinatorEntity], StateType | datetime | date]
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class MyGasBaseSensorEntityDescription(SensorEntityDescription):
     """Describes MyGas sensor entity default overrides."""
 
@@ -42,7 +42,7 @@ class MyGasBaseSensorEntityDescription(SensorEntityDescription):
     icon_fn: Callable[[MyGasBaseCoordinatorEntity], str | None] = lambda _: None
 
 
-@dataclass
+@dataclass(frozen=True, kw_only=True)
 class MyGasSensorEntityDescription(
     MyGasBaseSensorEntityDescription, MyGasEntityDescriptionMixin
 ):
