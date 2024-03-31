@@ -1,49 +1,33 @@
 refresh:
-  name: Обновить информацию
-  description: Обновить информацию из личного кабинета
   fields:
     device_id:
-      name: Прибор учета
-      description: Выберите прибор учета
       required: true
       selector:
         device:
           filter:
             integration: mygas
 get_bill:
-  name: Получить счет
-  description: Получить счет от Мой Газ
   fields:
     device_id:
-      name: Прибор учета
-      description: Выберите прибор учета
       required: true
       selector:
         device:
           filter:
             integration: mygas
     email:
-      name: Электронная почта
-      description: Отправить счет на электронную почту
       required: false
       selector:
         text:
 
 send_readings:
-  name: Отправить показания
-  description: Отправить показания в Мой Газ
   fields:
     device_id:
-      name: Прибор учета
-      description: Выберите прибор учета
       required: true
       selector:
         device:
           filter:
             integration: mygas
     value:
-      name: Показания
-      description: Показания счетчика, м³
       required: true
       selector:
         entity:
