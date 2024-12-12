@@ -6,8 +6,8 @@
 
 # Установка
 
-**Способ 1.** Через [HACS](https://hacs.xyz/) &rarr; Интеграции &rarr; Добавить пользовательский
-репозиторий &rarr; https://github.com/lizardsystems/hass-mygas/ &rarr; **My Gas** &rarr; Установить
+**Способ 1.** [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=lizardsystems&repository=hass-mygas&category=integration)
+&rarr; Установить
 
 **Способ 2.** Вручную скопируйте папку `mygas`
 из [latest release](https://github.com/lizardsystems/hass-mygas/releases/latest) в
