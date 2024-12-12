@@ -165,7 +165,7 @@ data:
 Параметры:
 
 - **device_id** - Устройство Прибор учета
-- **email** - электронная почта на которую будет отправлен счет 
+- **email** - электронная почта на которую будет отправлен счет, опционально 
 
 Вызов сервиса в формате yaml
 
@@ -182,6 +182,7 @@ data:
   device_id: 326995f8d0468225a1370b42297380c1
   email: test@mail.ru
 ```
+**Если была указана электронная почтя, то запрошенный счет придет только на электронную почту**
 
 После завершения выполнения сервиса генерируется событие **mygas_get_bill_completed**,
 в случае ошибки генерируется событие **mygas_get_bill_failed**.
@@ -260,6 +261,26 @@ context:
 
 
 ```
+
+После успешного выполнения службы получения счета на электронную почту генерируется события **mygas_get_bill_completed**, со следующими
+свойствами:
+
+```yaml
+event_type: mygas_get_bill_completed
+data:
+  device_id: a05df6bea0854e17027c36a906722560
+  date: "2024-01-01"
+  email: your_email@mail.ru 
+origin: LOCAL
+time_fired: "2024-02-25T16:29:07.414544+00:00"
+context:
+  id: 01HQGHJHNGX3GNRNBQDBR7AXRX
+  parent_id: null
+  user_id: 86cc507484e845f7b03f46eeaaab0fa7
+
+
+```
+
 ## Событие: mygas_send_readings_completed - Показания отправлены
 
 После успешного выполнения службы отправки показаний генерируется события **mygas_send_readings_completed**, со следующими
@@ -436,7 +457,9 @@ description: "Уведомление о счете за газ от сервис
 trigger:
   - platform: event
     event_type: mygas_get_bill_completed
-condition: [ ]
+conditions:
+  - condition: template
+    value_template: "{{ trigger.event.data.url !=none }}"
 action:
   # уведомление в Телеграм
   - service: telegram_bot.send_document
@@ -450,7 +473,7 @@ action:
         {{device_attr(trigger.event.data.device_id, 'name_by_user') or 
         device_attr(trigger.event.data.device_id, 'name') }}
         за {{trigger.event.data.date}}
-  # уведомление в веб-интерфейсе  
+  # уведомление в веб-интерфейсе
   - service: notify.persistent_notification
     data:
       message: >-
@@ -478,6 +501,39 @@ mode: single
 Результат выполнения - уведомление в Home Assistant
 
 ![Автоматизация](images/notify-02.png)
+
+Автоматизация в формате yaml для получения уведомлений об отправке на электронную почту
+```yaml
+alias: "Мой Газ: Уведомление о счете за газ на электронную почту"
+description: "Уведомление о счете за газ на электронную почту от сервиса Мой Газ"
+trigger:
+  - platform: event
+    event_type: mygas_get_bill_completed
+conditions:
+  - condition: template
+    value_template: "{{ trigger.event.data.email != none }}"
+action:
+  # уведомление в Телеграм
+  - service: telegram_bot.send_document
+    data:
+      authentication: digest
+      parse_mode: markdown
+      message: >-
+        Счет за газ для {{device_attr(trigger.event.data.device_id,
+        'name_by_user') or  device_attr(trigger.event.data.device_id,
+        'name') }} за {{trigger.event.data.date}} отправлен на
+        {{trigger.event.data.email}}.
+  # уведомление в веб-интерфейсе
+  - service: notify.persistent_notification
+    data:
+      message: >-
+        Счет за газ для {{device_attr(trigger.event.data.device_id,
+        'name_by_user') or  device_attr(trigger.event.data.device_id,
+        'name') }} за {{trigger.event.data.date}} отправлен на
+        {{trigger.event.data.email}}.
+
+mode: single
+```
 
 ### Уведомления об ошибках, возникших в процессе выполнения сервиса
 

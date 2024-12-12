@@ -3,7 +3,9 @@ description: "Уведомление о счете за газ от сервис
 trigger:
   - platform: event
     event_type: mygas_get_bill_completed
-condition: [ ]
+conditions:
+  - condition: template
+    value_template: "{{ trigger.event.data.url !=none }}"
 action:
   # уведомление в Телеграм
   - service: telegram_bot.send_document

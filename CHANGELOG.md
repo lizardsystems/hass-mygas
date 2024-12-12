@@ -7,10 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0] - 2024-02-19
 
-Первый публичный релиз.
+First public release.
 
 ## [1.2.0] - 2024-03-29
 
 ### Added 
 
 - Added icons.json
+
+## [1.3.0] - 2024-12-11
+
+### Added
+
+- Added notification of an invoice requested to email
+
+### Fixed 
+
+ - When requesting a bill to email via get_bill service an error occurred      

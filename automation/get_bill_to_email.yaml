@@ -1,0 +1,14 @@
+alias: "Мой Газ: Запросить счета за газ на электронную почту"
+description: "Запросить счета за газ на электронную почту в сервисе Мой Газ"
+trigger:
+  - platform: time
+    at: "01:00:00"
+condition:
+  - condition: template
+    value_template: "{{ now().day == 5 }}"
+action:
+  - service: mygas.get_bill
+    data:
+      device_id: <YOUR_DEVICE_ID>
+      email: <YOUR_EMAIL>
+mode: single

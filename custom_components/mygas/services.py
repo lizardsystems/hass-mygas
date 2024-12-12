@@ -124,13 +124,14 @@ async def _async_handle_get_bill(
     if result is None:
         raise HomeAssistantError(f"{service_call.service}: Empty response from API.")
     url = result.get(CONF_URL)
-    if url is None:
+    if url is None and email is None:
         raise HomeAssistantError(
             f"{service_call.service}: Unrecognised response from API: {result}"
         )
     return {
         ATTR_DATE: bill_date,
-        CONF_URL: unquote(url),
+        CONF_URL: unquote(url) if url else None,
+        ATTR_EMAIL: unquote(email) if email else None,
     }
 
 

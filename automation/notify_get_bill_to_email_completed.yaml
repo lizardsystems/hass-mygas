@@ -1,0 +1,29 @@
+alias: "Мой Газ: Уведомление о счете за газ на электронную почту"
+description: "Уведомление о счете за газ на электронную почту от сервиса Мой Газ"
+trigger:
+  - platform: event
+    event_type: mygas_get_bill_completed
+conditions:
+  - condition: template
+    value_template: "{{ trigger.event.data.email != none }}"
+action:
+  # уведомление в Телеграм
+  - service: telegram_bot.send_document
+    data:
+      authentication: digest
+      parse_mode: markdown
+      message: >-
+        Счет за газ для {{device_attr(trigger.event.data.device_id,
+        'name_by_user') or  device_attr(trigger.event.data.device_id,
+        'name') }} за {{trigger.event.data.date}} отправлен на
+        {{trigger.event.data.email}}.
+  # уведомление в веб-интерфейсе
+  - service: notify.persistent_notification
+    data:
+      message: >-
+        Счет за газ для {{device_attr(trigger.event.data.device_id,
+        'name_by_user') or  device_attr(trigger.event.data.device_id,
+        'name') }} за {{trigger.event.data.date}} отправлен на
+        {{trigger.event.data.email}}.
+
+mode: single
