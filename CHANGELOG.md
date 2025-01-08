@@ -24,3 +24,9 @@ First public release.
 ### Fixed 
 
  - When requesting a bill to email via get_bill service an error occurred      
+
+## [1.4.0] - 2025-01-08
+
+### Updated 
+
+ - Beginning January 2025, when requesting a bill, you must enter first day of the current month rather than the previous month (for which you need an estimate).      

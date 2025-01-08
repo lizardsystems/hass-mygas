@@ -80,6 +80,11 @@ def get_update_interval(hour: int, minute: int, second: int) -> timedelta:
     interval = timedelta(minutes=minutes_to_next_time)
     return interval
 
+def get_bill_date() -> date:
+    """Get first day of current month."""
+    today = date.today()
+    first_day = today.replace(day=1)  # first day of current month
+    return first_day
 
 def get_previous_month() -> date:
     """Get first day of previous month."""
