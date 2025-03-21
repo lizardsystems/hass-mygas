@@ -81,7 +81,7 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
     MyGasSensorEntityDescription(
         key="price",
         name="Цена за м³",
-        native_unit_of_measurement="RUB/m³",
+        native_unit_of_measurement="RUB",
         device_class=SensorDeviceClass.MONETARY,
         # state_class=SensorStateClass.TOTAL,
         value_fn=lambda device: _to_float(
