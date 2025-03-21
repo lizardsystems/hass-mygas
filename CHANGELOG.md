@@ -30,3 +30,9 @@ First public release.
 ### Updated 
 
  - Beginning January 2025, when requesting a bill, you must enter first day of the current month rather than the previous month (for which you need an estimate).      
+
+## [1.4.1] - 2025-03-21
+
+### Changed 
+
+ - Changed unit of measurement to RUB/m³       
