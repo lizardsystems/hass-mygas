@@ -35,4 +35,8 @@ First public release.
 
 ### Changed 
 
- - Changed unit of measurement to RUB/m³       
+ - Changed unit of measurement to RUB/m³      
+
+## [1.5.0] - 2025-04-22
+
+ - Added support for retrieving bills for previous months (on a specified date) and for the current month (by default). Now it is possible to request a bill for any month.
