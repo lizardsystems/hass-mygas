@@ -1,15 +1,13 @@
 """MyGas services."""
-
 from __future__ import annotations
 
+import logging
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-import logging
 from typing import Any
 from urllib.parse import unquote
 
 import voluptuous as vol
-
 from homeassistant.const import ATTR_DATE, ATTR_DEVICE_ID, CONF_ERROR, CONF_URL
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import HomeAssistantError
@@ -29,7 +27,7 @@ from .const import (
     SERVICE_SEND_READINGS,
 )
 from .coordinator import MyGasCoordinator
-from .helpers import async_get_coordinator, get_bill_date, get_float_value, get_previous_month
+from .helpers import async_get_coordinator, get_float_value, get_bill_date
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -53,7 +51,6 @@ SERVICE_SEND_READINGS_SCHEMA = vol.Schema(
 SERVICE_GET_BILL_SCHEMA = vol.Schema(
     {
         **SERVICE_BASE_SCHEMA,
-        vol.Optional(ATTR_DATE): cv.date,
         vol.Optional(ATTR_EMAIL): vol.Email(),
     },
 )
@@ -71,14 +68,14 @@ class ServiceDescription:
 
 
 async def _async_handle_refresh(
-    hass: HomeAssistant, service_call: ServiceCall, coordinator: MyGasCoordinator
+        hass: HomeAssistant, service_call: ServiceCall, coordinator: MyGasCoordinator
 ) -> dict[str, Any]:
     await coordinator.async_refresh()
     return {}
 
 
 async def _async_handle_send_readings(
-    hass: HomeAssistant, service_call: ServiceCall, coordinator: MyGasCoordinator
+        hass: HomeAssistant, service_call: ServiceCall, coordinator: MyGasCoordinator
 ) -> dict[str, Any]:
     value = int(
         round(
@@ -116,10 +113,10 @@ async def _async_handle_send_readings(
 
 
 async def _async_handle_get_bill(
-    hass: HomeAssistant, service_call: ServiceCall, coordinator: MyGasCoordinator
+        hass: HomeAssistant, service_call: ServiceCall, coordinator: MyGasCoordinator
 ) -> dict[str, Any]:
     device_id = service_call.data.get(ATTR_DEVICE_ID)
-    bill_date = service_call.data.get(ATTR_DATE, get_previous_month())
+    bill_date = get_bill_date()
     email = service_call.data.get(ATTR_EMAIL)
 
     result = await coordinator.async_get_bill(device_id, bill_date, email)

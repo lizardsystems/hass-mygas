@@ -5,50 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2024-02-19
 
-## [1.5.0] - 2025-04-23
-
-### Added
-
- - Поддержка получения счетов на указанную дату (месяц) и за прошлый месяц (по умолчанию).
-
-### Updated
-
- - Исправлена документация
- - Добавлен пример запроса счета на указанную дату
- - Добавлен пример запроса счета за текущий месяц
-
-## [1.4.1] - 2025-03-21
-
-### Changed 
-
- - Изменена единица измерения на RUB/m³      
-
-
-## [1.4.0] - 2025-01-08
-
-### Updated 
-
-  - С января 2025 года при запросе счета необходимо указывать первый день текущего месяца, а не предыдущего месяца (для которого требуется расчет).      
-
-
-## [1.3.0] - 2024-12-11
-
-### Added
-
-- Добавлено уведомление о запросе счета на email
-
-### Fixed 
-
- - При запросе счета на email через сервис get_bill возникала ошибка       
+First public release.
 
 ## [1.2.0] - 2024-03-29
 
 ### Added 
 
-- Добавлен файл icons.json
+- Added icons.json
 
+## [1.3.0] - 2024-12-11
 
-## [1.0.0] - 2024-02-19
+### Added
 
-Первый публичный релиз.
+- Added notification of an invoice requested to email
+
+### Fixed 
+
+ - When requesting a bill to email via get_bill service an error occurred      
+
+## [1.4.0] - 2025-01-08
+
+### Updated 
+
+ - Beginning January 2025, when requesting a bill, you must enter first day of the current month rather than the previous month (for which you need an estimate).      
+
+## [1.4.1] - 2025-03-21
+
+### Changed 
+
+ - Changed unit of measurement to RUB/m³       
