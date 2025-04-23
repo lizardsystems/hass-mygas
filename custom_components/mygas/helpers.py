@@ -91,7 +91,7 @@ def get_previous_month() -> date:
     today = date.today()
     first_day = (today - timedelta(days=today.day)).replace(
         day=1
-    )  # first day of previous month
+    )  # first day of the previous month
     return first_day
 
 

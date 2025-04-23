@@ -93,6 +93,10 @@
           "name": "Device",
           "description": "Select My Gas metering device"
         },
+        "date": {
+          "name": "Date",
+          "description": "Date of the bill"
+        },
         "email": {
           "name": "Email",
           "description": "Send a bill to email"
