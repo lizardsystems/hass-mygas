@@ -1,11 +1,14 @@
 """Base entity for MyGas integration."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date, datetime
+from typing import Any
 
 from aiomygas.const import APP_VERSION, MOBILE_APP_NAME
+
 from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.const import ATTR_MODEL, ATTR_NAME
 from homeassistant.helpers.entity import DeviceInfo
@@ -60,11 +63,11 @@ class MyGasBaseCoordinatorEntity(CoordinatorEntity[MyGasCoordinator]):
     lspu_account_id: int
 
     def __init__(
-            self,
-            coordinator: MyGasCoordinator,
-            account_id: int,
-            lspu_account_id: int,
-            counter_id: int,
+        self,
+        coordinator: MyGasCoordinator,
+        account_id: int,
+        lspu_account_id: int,
+        counter_id: int,
     ) -> None:
         """Initialize the Entity."""
         super().__init__(coordinator)
@@ -99,30 +102,30 @@ class MyGasBaseCoordinatorEntity(CoordinatorEntity[MyGasCoordinator]):
             configuration_url=CONFIGURATION_URL,
         )
 
-    def get_lspu_account_data(self) -> dict[str, any] | None:
+    def get_lspu_account_data(self) -> dict[str | int, Any]:
         """Get LSPU account data."""
         return self.coordinator.get_lspu_accounts(self.account_id)[self.lspu_account_id]
 
-    def get_counter_data(self) -> dict[str, any] | None:
+    def get_counter_data(self) -> dict[str, Any]:
         """Get counter data."""
         return self.coordinator.get_counters(self.account_id, self.lspu_account_id)[
             self.counter_id
         ]
 
-    def get_latest_readings(self) -> dict[str, any] | None:
+    def get_latest_readings(self) -> dict[str, Any]:
         """Latest readings for counter."""
         counter = self.coordinator.get_counters(self.account_id, self.lspu_account_id)[
             self.counter_id
         ]
         values = counter.get("values", [])
-        return values[0] if values else None
+        return values[0] if values else {}
 
     def get_counter_attr(self):
         """Get counter attr."""
         counter = self.coordinator.get_counters(self.account_id, self.lspu_account_id)[
             self.counter_id
         ]
-        attr = {
+        return {
             "Модель": _to_str(counter.get("model")),
             "Серийный номер": _to_str(counter.get("serialNumber")),
             "Состояние счетчика": _to_str(counter.get("state")),
@@ -146,5 +149,3 @@ class MyGasBaseCoordinatorEntity(CoordinatorEntity[MyGasCoordinator]):
                 counter.get("commissionedOn"), "%Y-%m-%dT%H:%M:%S"
             ),
         }
-
-        return attr

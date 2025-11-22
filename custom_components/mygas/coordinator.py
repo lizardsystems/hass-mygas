@@ -1,13 +1,15 @@
 """MyGas Account Coordinator."""
+
 from __future__ import annotations
 
-import logging
 from datetime import date
+import logging
 from random import randrange
 from typing import Any
 
 from aiomygas import MyGasApi, SimpleMyGasAuth
 from aiomygas.exceptions import MyGasAuthError
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
@@ -30,15 +32,15 @@ from .const import (
     ATTR_UUID,
     CONF_ACCOUNT,
     CONF_ACCOUNTS,
+    CONF_AUTO_UPDATE,
     CONF_INFO,
     DOMAIN,
     REQUEST_REFRESH_DEFAULT_COOLDOWN,
     UPDATE_HOUR_BEGIN,
     UPDATE_HOUR_END,
-    CONF_AUTO_UPDATE,
 )
 from .decorators import async_api_request_handler
-from .helpers import make_device_id, get_update_interval
+from .helpers import get_update_interval, make_device_id
 
 
 class MyGasCoordinator(DataUpdateCoordinator):
@@ -84,7 +86,7 @@ class MyGasCoordinator(DataUpdateCoordinator):
         self.force_next_update = True
         await self.async_refresh()
 
-    async def _async_update_data(self) -> dict[str, Any]:
+    async def _async_update_data(self) -> dict[str, Any] | None:
         """Fetch data from MyGas."""
         _data: dict[str, Any] = self.data if self.data is not None else {}
         new_data: dict[str, Any] = {
@@ -137,17 +139,17 @@ class MyGasCoordinator(DataUpdateCoordinator):
                     "Account %s does not have els or lspu in accounts info",
                     self.username,
                 )
-                return new_data
-
-            self.logger.debug("Data updated successfully for %s", self.username)
-            self.logger.debug("%s", new_data)
-
-            return new_data
+                return None
 
         except MyGasAuthError as exc:
             raise ConfigEntryAuthFailed("Incorrect Login or Password") from exc
         except Exception as exc:  # pylint: disable=broad-except
             raise UpdateFailed(f"Error communicating with API: {exc}") from exc
+        else:
+            self.logger.debug("Data updated successfully for %s", self.username)
+            self.logger.debug("%s", new_data)
+
+            return new_data
         finally:
             self.force_next_update = False
             if self.auto_update:
@@ -204,7 +206,7 @@ class MyGasCoordinator(DataUpdateCoordinator):
                 self.logger.warning("Lspu info for %s not retrieved", lspu_id)
         return lspu_info
 
-    def get_accounts(self) -> dict[int, dict[str, Any]]:
+    def get_accounts(self) -> dict[int, dict[str | int, Any]]:
         """Get accounts info."""
         return self.data.get(CONF_INFO, {})
 
@@ -230,13 +232,13 @@ class MyGasCoordinator(DataUpdateCoordinator):
         """Account is ELS."""
         return self.data.get(ATTR_IS_ELS, False)
 
-    def get_lspu_accounts(self, account_id: int) -> list[dict[str, Any]]:
+    def get_lspu_accounts(self, account_id: int) -> list[dict[str | int, Any]]:
         """Get LSPU accounts."""
         _data = self.get_accounts()[account_id]
         if self.is_els():
             _lspu_accounts = _data[ATTR_LSPU_INFO_GROUP]
         else:
-            _lspu_accounts = _data
+            _lspu_accounts = _data if isinstance(_data, list) else [_data]
         return _lspu_accounts
 
     def get_counters(
@@ -252,6 +254,7 @@ class MyGasCoordinator(DataUpdateCoordinator):
         """Find device by id."""
         device_registry = dr.async_get(self.hass)
         device = device_registry.async_get(device_id)
+        assert device
 
         for account_id in self.get_accounts():
             for lspu_account_id in range(len(self.get_lspu_accounts(account_id))):
@@ -264,7 +267,7 @@ class MyGasCoordinator(DataUpdateCoordinator):
                     _counter_uuid = self.get_counters(account_id, lspu_account_id)[
                         counter_id
                     ].get(ATTR_UUID)
-
+                    assert _counter_uuid
                     if device.identifiers == {
                         (DOMAIN, make_device_id(_account_number, _counter_uuid))
                     }:
@@ -274,62 +277,57 @@ class MyGasCoordinator(DataUpdateCoordinator):
     @async_api_request_handler
     async def _async_get_client_info(self) -> dict[str, Any]:
         """Fetch client info."""
-        _data = await self._api.async_get_client_info()
-        return _data
+        return await self._api.async_get_client_info()
 
     @async_api_request_handler
     async def _async_get_accounts(self) -> dict[str, Any]:
         """Fetch accounts info."""
-        _data = await self._api.async_get_accounts()
-        return _data
+        return await self._api.async_get_accounts()
 
     @async_api_request_handler
     async def _async_get_els_info(self, els_id: int) -> dict[str, Any]:
         """Fetch els info."""
-        _data = await self._api.async_get_els_info(els_id)
-        return _data
+        return await self._api.async_get_els_info(els_id)
 
     @async_api_request_handler
     async def _async_get_lspu_info(self, lspu_id: int) -> dict[str, Any]:
         """Fetch lspu info."""
-        _data = await self._api.async_get_lspu_info(lspu_id)
-        return _data
+        return await self._api.async_get_lspu_info(lspu_id)
 
     @async_api_request_handler
     async def _async_get_charges(self, lspu_id: int) -> dict[str, Any]:
         """Fetch charges info."""
-        _data = await self._api.async_get_charges(lspu_id)
-        return _data
+        return await self._api.async_get_charges(lspu_id)
 
     @async_api_request_handler
     async def _async_get_payments(self, lspu_id: int) -> dict[str, Any]:
         """Fetch payments info."""
-        _data = await self._api.async_get_payments(lspu_id)
-        return _data
+        return await self._api.async_get_payments(lspu_id)
 
     @async_api_request_handler
     async def _async_send_readings(
         self,
         lspu_id: int,
         equipment_uuid: str,
-        value: int | float,
+        value: float,
         els_id: int | None = None,
     ) -> list[dict[str, Any]]:
         """Send readings with handle errors by decorator."""
-        _data = await self._api.async_indication_send(
+        return await self._api.async_indication_send(
             lspu_id, equipment_uuid, value, els_id
         )
-        return _data
 
     @async_api_request_handler
     async def _async_get_receipt(
-        self, date_iso_short: str, email: str, account_number: int, is_els: bool
+        self, date_iso_short: str, email: str | None, account_number: int, is_els: bool
     ) -> dict[str, Any]:
         """Get receipt data."""
-        _data = await self._api.async_get_receipt(
-            date_iso_short, email, account_number, is_els
+        return await self._api.async_get_receipt(
+            date_iso_short,
+            email,  # pyright: ignore[reportArgumentType]
+            account_number,
+            is_els,
         )
-        return _data
 
     async def async_get_bill(
         self,
@@ -338,44 +336,48 @@ class MyGasCoordinator(DataUpdateCoordinator):
         email: str | None = None,
     ) -> dict[str, Any] | None:
         """Get receipt data."""
+        if bill_date is None:
+            bill_date = date.today()
         date_iso_short = bill_date.strftime("%Y-%m-%d")
-        account_id, *_ = await self.find_account_by_device_id(device_id)
+        device = await self.find_account_by_device_id(device_id)
+        assert device
+        account_id, *_ = device
         if account_id is not None:
             is_els = self.is_els()
-            _data = await self._async_get_receipt(
+            return await self._async_get_receipt(
                 date_iso_short, email, account_id, is_els
             )
-            return _data
         return None
 
     async def async_send_readings(
         self,
         device_id,
-        value: int | float,
+        value: float,
     ) -> list[dict[str, Any]]:
         """Send readings with handle errors by decorator."""
-
-        account_id, lspu_account_id, counter_id = await self.find_account_by_device_id(
-            device_id
-        )
-
-        lspu_id = self.get_lspu_accounts(account_id)[lspu_account_id].get(
-            ATTR_ACCOUNT_ID
-        )
+        device = await self.find_account_by_device_id(device_id)
+        assert device
+        account_id, lspu_account_id, counter_id = device
+        assert account_id is not None
+        assert counter_id is not None
+        assert lspu_account_id is not None
+        lspu_accounts = self.get_lspu_accounts(account_id)
+        assert lspu_accounts
+        lspu_account = lspu_accounts[lspu_account_id]
+        assert lspu_account
+        lspu_id = lspu_account[ATTR_ACCOUNT_ID]
 
         if self.is_els():
             els_id = account_id
         else:
             els_id = None
-
-        equipment_uuid = self.get_counters(account_id, lspu_account_id)[counter_id].get(
-            ATTR_UUID
-        )
-
-        _data = await self._async_send_readings(
+        counters = self.get_counters(account_id, lspu_account_id)
+        assert counters
+        equipment_uuid = counters[counter_id][ATTR_UUID]
+        assert equipment_uuid
+        return await self._async_send_readings(
             lspu_id,
             equipment_uuid,
             value,
             els_id,
         )
-        return _data

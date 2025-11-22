@@ -361,28 +361,28 @@ context:
 Автоматизация в формате yaml
 
 ```yaml
-alias: Отправить показания по газу
-description: Отправить показания по газу
-trigger:
-  - platform: time
-    at: "02:00:00"
-condition:
+alias: "Мой Газ: Отправить показания по газу"
+description: Отправить показания по газу в сервис Мой Газ
+triggers:
+  - at: "02:00:00"
+    trigger: time
+conditions:
   - condition: template
     value_template: "{{ now().day == 24 }}"
-action:
-  - alias: "Мой Газ: Отправить показания (Дом)"
-    service: mygas.send_readings
+actions:
+  - alias: "Мой Газ: Отправить показания"
     data:
-      value: sensor.waterius_9079912_ch0
-      device_id: 5dc83c4fd76017381722d554832464c4
+      value: sensor.gaz_dom_pokazaniia
+      device_id: 70e3a0546d0bdd5a8786bfb595def7db
+    action: mygas.send_readings
   - delay:
-      hours: 1
-      minutes: 0
+      hours: 0
+      minutes: 1
       seconds: 0
       milliseconds: 0
-  - service: mygas.refresh
-    data:
-      device_id: 5dc83c4fd76017381722d554832464c4
+  - data:
+      device_id: 70e3a0546d0bdd5a8786bfb595def7db
+    action: mygas.refresh 
 mode: single
 ```
 Вы можете указать свою дату для этого скорректируйте строку `"{{ now().day == 24 }}"`, 
@@ -425,30 +425,29 @@ mode: single
 
 ```yaml
 alias: "Мой Газ: Уведомление об отправленных показаниях"
-description: Уведомление об отправленных показаниях в сервис Мой Газ
-trigger:
-  - platform: event
-    event_type: mygas_send_readings_completed
-condition: []
-action:
-  - service: telegram_bot.send_message
-    data:
-      authentication: digest
-      parse_mode: markdown
-      title: >-
-        Показания для {{
-        device_attr(trigger.event.data.device_id,'name_by_user') or
-        device_attr(trigger.event.data.device_id, 'name') }} отправлены {{
-        now().strftime('%d-%m-%Y %H:%M') }}
+description: "Уведомление об отправленных показаниях в сервис Мой Газ"
+triggers:
+  - event_type: mygas_send_readings_completed
+    trigger: event
+conditions: []
+actions:
+  - data:
+      config_entry_id: <YOUR_TELEGRAM_BOT_CONFIG_ENTRY_ID>  # Replace with your Telegram Bot config entry ID
       message: "Показания: {{ trigger.event.data.readings }}"
-  - service: notify.persistent_notification
-    data:
       title: >-
-        Показания для {{
+        🔥Газ. Показания для {{
+        device_attr(trigger.event.data.device_id,'name_by_user') or  
+        device_attr(trigger.event.data.device_id, 'name') }} отправлены {{  
+        now().strftime('%d-%m-%Y %H:%M') }}
+    action: telegram_bot.send_message
+  - data:
+      title: >-
+        🔥Газ. Показания для {{
         device_attr(trigger.event.data.device_id,'name_by_user') or
         device_attr(trigger.event.data.device_id, 'name') }} отправлены {{
         now().strftime("%d-%m-%Y %H:%M") }}
       message: "Показания: {{ trigger.event.data.readings }}"
+    action: notify.persistent_notification
 mode: single
 
 
@@ -461,48 +460,42 @@ mode: single
 
 ![Автоматизация](images/notify-01.png)
 
+Получить `<YOUR_TELEGRAM_BOT_CONFIG_ENTRY_ID>` можно на странице настроек вашего бота в Home Assistant.
+
+![Автоматизация](images/telegram-01_01.png)
+
 ### Уведомления о счете за газ
 
 Автоматизация в формате yaml
 
 ```yaml
-alias: "Мой Газ: Уведомление о счете за газ"
-description: "Уведомление о счете за газ от сервиса Мой Газ"
-trigger:
-  - platform: event
-    event_type: mygas_get_bill_completed
-conditions:
-  - condition: template
-    value_template: "{{ trigger.event.data.url !=none }}"
-action:
-  # уведомление в Телеграм
-  - service: telegram_bot.send_document
-    data:
-      authentication: digest
-      parse_mode: markdown
-      url: >-
-        {{trigger.event.data.url}}
+lias: "Мой Газ: Уведомление о счете за газ"
+description: Уведомление о счете за газ от сервиса Мой Газ
+triggers:
+  - event_type: mygas_get_bill_completed
+    trigger: event
+conditions: []
+actions:
+  - data:
+      url: "{{trigger.event.data.url}}"
       caption: >-
-        Счет за газ для
-        {{device_attr(trigger.event.data.device_id, 'name_by_user') or 
-        device_attr(trigger.event.data.device_id, 'name') }}
+        🔥Газ. Счет для {{device_attr(trigger.event.data.device_id,
+        'name_by_user') or  device_attr(trigger.event.data.device_id, 'name') }}
         за {{trigger.event.data.date}}
-  # уведомление в веб-интерфейсе
-  - service: notify.persistent_notification
-    data:
+      config_entry_id: <YOUR_TELEGRAM_BOT_CONFIG_ENTRY_ID>  # Replace with your Telegram Bot config entry ID
+    action: telegram_bot.send_document
+  - data:
       message: >-
-        Скачать счет для 
-        [{{device_attr(trigger.event.data.device_id, 'name_by_user') or 
-        device_attr(trigger.event.data.device_id, 'name') }}]({{trigger.event.data.url}})
-        за {{trigger.event.data.date}}.
-
+        Скачать счет для [{{device_attr(trigger.event.data.device_id,
+        'name_by_user') or  device_attr(trigger.event.data.device_id, 'name')
+        }}]({{trigger.event.data.url}}) за {{trigger.event.data.date}}.
       title: >-
-        Счет за газ для
-        {{device_attr(trigger.event.data.device_id, 'name_by_user') or 
-        device_attr(trigger.event.data.device_id, 'name') }}
+        🔥Газ. Счет для {{device_attr(trigger.event.data.device_id,
+        'name_by_user') or  device_attr(trigger.event.data.device_id, 'name') }}
         за {{trigger.event.data.date}}
-
+    action: notify.persistent_notification
 mode: single
+
 
 ```
 
@@ -519,34 +512,31 @@ mode: single
 Автоматизация в формате yaml для получения уведомлений об отправке на электронную почту
 ```yaml
 alias: "Мой Газ: Уведомление о счете за газ на электронную почту"
-description: "Уведомление о счете за газ на электронную почту от сервиса Мой Газ"
-trigger:
-  - platform: event
-    event_type: mygas_get_bill_completed
+description: Уведомление о счете за газ на электронную почту от сервиса Мой Газ
+triggers:
+  - event_type: mygas_get_bill_completed
+    trigger: event
 conditions:
   - condition: template
     value_template: "{{ trigger.event.data.email != none }}"
-action:
-  # уведомление в Телеграм
-  - service: telegram_bot.send_document
-    data:
-      authentication: digest
-      parse_mode: markdown
+actions:
+  - data:
       message: >-
-        Счет за газ для {{device_attr(trigger.event.data.device_id,
-        'name_by_user') or  device_attr(trigger.event.data.device_id,
-        'name') }} за {{trigger.event.data.date}} отправлен на
-        {{trigger.event.data.email}}.
-  # уведомление в веб-интерфейсе
-  - service: notify.persistent_notification
-    data:
+        🔥Газ. Счет для {{device_attr(trigger.event.data.device_id,
+        'name_by_user') or  device_attr(trigger.event.data.device_id, 'name') }}
+        за {{trigger.event.data.date}}
+      config_entry_id: <YOUR_TELEGRAM_BOT_CONFIG_ENTRY_ID>  # Replace with your Telegram Bot config entry ID
+    action: telegram_bot.send_message
+  - data:
       message: >-
-        Счет за газ для {{device_attr(trigger.event.data.device_id,
-        'name_by_user') or  device_attr(trigger.event.data.device_id,
-        'name') }} за {{trigger.event.data.date}} отправлен на
+        🔥Газ. Счет для {{device_attr(trigger.event.data.device_id,
+        'name_by_user') or  device_attr(trigger.event.data.device_id, 'name') }}
+        за {{trigger.event.data.date}} отправлен на
         {{trigger.event.data.email}}.
-
+    action: notify.persistent_notification
 mode: single
+
+
 ```
 
 ### Уведомления об ошибках, возникших в процессе выполнения сервиса
@@ -554,55 +544,44 @@ mode: single
 Уведомления об ошибках, возникших в процессе выполнения, в Телеграм и веб интерфейс Home Assistant.
 
 ```yaml
-alias: Уведомление об ошибке при выполнения сервиса
-description: ""
-trigger:
-  - platform: event
-    event_type: mygas_send_readings_failed
-  - platform: event
-    event_type: mygas_get_bill_failed
-  - platform: event
-    event_type: mygas_refresh_failed
-condition: [ ]
-action:
-  # уведомление в Телеграм
-  - service: telegram_bot.send_message
-    data:
-      authentication: digest
-      parse_mode: markdown
-      title: >-
-        {% if trigger.event.event_type == 'mygas_send_readings_failed' %}
-        Ошибка при передаче показаний для
-        {% elif trigger.event.event_type == 'mygas_get_bill_failed' %}
-        Ошибка при получении счета для
-        {% elif trigger.event.event_type == 'mygas_refresh_failed' %}
-        Ошибка при обновлении информации для
-        {% else %}
-        Ошибка при выполнении сервиса для
-        {% endif %}
-        {{device_attr(trigger.event.data.device_id, 'name_by_user') or 
-        device_attr(trigger.event.data.device_id, 'name') }}
-        от {{ now().strftime('%d-%m-%Y %H:%M')}}
+alias: "Мой Газ: Уведомление об ошибке при выполнения сервиса"
+description: Уведомление об ошибке при выполнения сервиса Мой Газ
+triggers:
+  - event_type: mygas_send_readings_failed
+    trigger: event
+  - event_type: mygas_get_bill_failed
+    trigger: event
+  - event_type: mygas_refresh_failed
+    trigger: event
+conditions: []
+actions:
+  - data:
+      config_entry_id: <YOUR_TELEGRAM_BOT_CONFIG_ENTRY_ID>  # Replace with your Telegram Bot config entry ID
       message: "{{ trigger.event.data.error }}"
-  # уведомление в веб-интерфейсе
-  - service: notify.persistent_notification
-    data:
       title: >-
-        {% if trigger.event.event_type == 'mygas_send_readings_failed' %}
-        Ошибка при передаче показаний для
-        {% elif trigger.event.event_type == 'mygas_get_bill_failed' %}
-        Ошибка при получении счета для
-        {% elif trigger.event.event_type == 'mygas_refresh_failed' %}
-        Ошибка при обновлении информации для
-        {% else %}
-        Ошибка при выполнении сервиса для
-        {% endif %}
-        {{device_attr(trigger.event.data.device_id, 'name_by_user') or 
-        device_attr(trigger.event.data.device_id, 'name') }} 
-        от {{ now().strftime('%d-%m-%Y %H:%M')}}
+        🔥Газ. {% if trigger.event.event_type == 'mygas_send_readings_failed' %}
+        Ошибка при   передаче показаний для {% elif trigger.event.event_type
+        ==   'mygas_get_bill_failed' %} Ошибка при получении счета для {% elif  
+        trigger.event.event_type == 'mygas_refresh_failed' %} Ошибка при
+        обновлении   информации для {% else %} Ошибка при выполнении сервиса для
+        {% endif %}   {{device_attr(trigger.event.data.device_id,
+        'name_by_user') or    device_attr(trigger.event.data.device_id, 'name')
+        }} от {{   now().strftime('%d-%m-%Y %H:%M')}}
+    action: telegram_bot.send_message
+  - data:
+      title: >-
+        🔥Газ. {% if trigger.event.event_type == 'mygas_send_readings_failed' %}
+        Ошибка при передаче показаний для {% elif trigger.event.event_type ==
+        'mygas_get_bill_failed' %} Ошибка при получении счета для {% elif
+        trigger.event.event_type == 'mygas_refresh_failed' %} Ошибка при
+        обновлении информации для {% else %} Ошибка при выполнении сервиса для
+        {% endif %} {{device_attr(trigger.event.data.device_id, 'name_by_user')
+        or  device_attr(trigger.event.data.device_id, 'name') }}  от {{
+        now().strftime('%d-%m-%Y %H:%M')}}
       message: "{{ trigger.event.data.error }}"
-
+    action: notify.persistent_notification
 mode: single
+
 ```
 
 ## Получение счёта за газ с выбором даты через интерфейс

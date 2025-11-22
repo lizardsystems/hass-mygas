@@ -1,4 +1,5 @@
 """MyGas decorators."""
+
 from __future__ import annotations
 
 import asyncio
@@ -8,13 +9,14 @@ from random import randrange
 from typing import TYPE_CHECKING, Any, Concatenate, ParamSpec, TypeVar
 
 from aiomygas.exceptions import MyGasApiError, MyGasAuthError
+
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from .const import API_MAX_TRIES, API_RETRY_DELAY, API_TIMEOUT
 
 if TYPE_CHECKING:
-    pass
+    from .coordinator import MyGasCoordinator
 
 _MyGasCoordinatorT = TypeVar("_MyGasCoordinatorT", bound="MyGasCoordinator")
 _R = TypeVar("_R")
@@ -22,13 +24,13 @@ _P = ParamSpec("_P")
 
 
 def async_api_request_handler(
-        method: Callable[Concatenate[_MyGasCoordinatorT, _P], Awaitable[_R]],
+    method: Callable[Concatenate[_MyGasCoordinatorT, _P], Awaitable[_R]],
 ) -> Callable[Concatenate[_MyGasCoordinatorT, _P], Coroutine[Any, Any, _R]]:
     """Handle API errors."""
 
     @wraps(method)
     async def wrapper(
-            self: _MyGasCoordinatorT, *args: _P.args, **kwargs: _P.kwargs
+        self: _MyGasCoordinatorT, *args: _P.args, **kwargs: _P.kwargs
     ) -> _R:
         """Wrap an API method."""
         try:
@@ -58,8 +60,8 @@ def async_api_request_handler(
                     )
 
                 if tries >= API_MAX_TRIES:
-                    raise MyGasApiError(
-                        f"API error while execute function {method.__name__}"
+                    raise UpdateFailed(
+                        f"Invalid response from MyGas API: {method.__name__}"
                     )
 
                 self.logger.warning(

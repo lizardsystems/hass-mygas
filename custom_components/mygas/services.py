@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 import logging
+from math import ceil
 from typing import Any
 from urllib.parse import unquote
 
@@ -29,7 +30,7 @@ from .const import (
     SERVICE_SEND_READINGS,
 )
 from .coordinator import MyGasCoordinator
-from .helpers import async_get_coordinator, get_bill_date, get_float_value, get_previous_month
+from .helpers import async_get_coordinator, get_bill_date, get_float_value
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -54,7 +55,7 @@ SERVICE_GET_BILL_SCHEMA = vol.Schema(
     {
         **SERVICE_BASE_SCHEMA,
         vol.Optional(ATTR_DATE): cv.date,
-        vol.Optional(ATTR_EMAIL): vol.Email(),
+        vol.Optional(ATTR_EMAIL): vol.Email,
     },
 )
 
@@ -80,11 +81,11 @@ async def _async_handle_refresh(
 async def _async_handle_send_readings(
     hass: HomeAssistant, service_call: ServiceCall, coordinator: MyGasCoordinator
 ) -> dict[str, Any]:
-    value = int(
-        round(
-            get_float_value(hass, service_call.data.get(ATTR_VALUE)) + 0.5
-        )  # round to greater integer
-    )
+    value = get_float_value(hass, service_call.data.get(ATTR_VALUE))
+    if value is None:
+        raise HomeAssistantError(f"{service_call.service}: Invalid reading value.")
+    value = int(ceil(value))  # round to greater integer
+
     device_id = service_call.data.get(ATTR_DEVICE_ID)
     result = await coordinator.async_send_readings(device_id, value)
 
@@ -121,7 +122,8 @@ async def _async_handle_get_bill(
     device_id = service_call.data.get(ATTR_DEVICE_ID)
     bill_date = service_call.data.get(ATTR_DATE, get_bill_date())
     email = service_call.data.get(ATTR_EMAIL)
-
+    if device_id is None:
+        raise HomeAssistantError("Device is undefined")
     result = await coordinator.async_get_bill(device_id, bill_date, email)
 
     if result is None:
@@ -154,7 +156,7 @@ SERVICES: dict[str, ServiceDescription] = {
 async def async_setup_services(hass: HomeAssistant) -> None:
     """Set up the MyGas services."""
 
-    @verify_domain_control(hass, DOMAIN)
+    @verify_domain_control(DOMAIN)
     async def _async_handle_service(service_call: ServiceCall) -> None:
         """Call a service."""
         _LOGGER.debug("Service call %s", service_call.service)

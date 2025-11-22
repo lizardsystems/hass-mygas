@@ -1,37 +1,26 @@
 alias: "Мой Газ: Уведомление о счете за газ"
-description: "Уведомление о счете за газ от сервиса Мой Газ"
-trigger:
-  - platform: event
-    event_type: mygas_get_bill_completed
-conditions:
-  - condition: template
-    value_template: "{{ trigger.event.data.url !=none }}"
-action:
-  # уведомление в Телеграм
-  - service: telegram_bot.send_document
-    data:
-      authentication: digest
-      parse_mode: markdown
-      url: >-
-        {{trigger.event.data.url}}
+description: Уведомление о счете за газ от сервиса Мой Газ
+triggers:
+  - event_type: mygas_get_bill_completed
+    trigger: event
+conditions: []
+actions:
+  - data:
+      url: "{{trigger.event.data.url}}"
       caption: >-
-        Счет за газ для
-        {{device_attr(trigger.event.data.device_id, 'name_by_user') or 
-        device_attr(trigger.event.data.device_id, 'name') }}
+        🔥Газ. Счет для {{device_attr(trigger.event.data.device_id,
+        'name_by_user') or  device_attr(trigger.event.data.device_id, 'name') }}
         за {{trigger.event.data.date}}
-  # уведомление в веб-интерфейсе
-  - service: notify.persistent_notification
-    data:
+      config_entry_id: <YOUR_TELEGRAM_BOT_CONFIG_ENTRY_ID>  # Replace with your Telegram Bot config entry ID
+    action: telegram_bot.send_document
+  - data:
       message: >-
-        Скачать счет для 
-        [{{device_attr(trigger.event.data.device_id, 'name_by_user') or 
-        device_attr(trigger.event.data.device_id, 'name') }}]({{trigger.event.data.url}})
-        за {{trigger.event.data.date}}.
-
+        Скачать счет для [{{device_attr(trigger.event.data.device_id,
+        'name_by_user') or  device_attr(trigger.event.data.device_id, 'name')
+        }}]({{trigger.event.data.url}}) за {{trigger.event.data.date}}.
       title: >-
-        Счет за газ для
-        {{device_attr(trigger.event.data.device_id, 'name_by_user') or 
-        device_attr(trigger.event.data.device_id, 'name') }}
+        🔥Газ. Счет для {{device_attr(trigger.event.data.device_id,
+        'name_by_user') or  device_attr(trigger.event.data.device_id, 'name') }}
         за {{trigger.event.data.date}}
-
+    action: notify.persistent_notification
 mode: single

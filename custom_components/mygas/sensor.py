@@ -1,4 +1,5 @@
 """MyGas Sensor definitions."""
+
 from __future__ import annotations
 
 from homeassistant.components.sensor import (
@@ -14,10 +15,7 @@ from homeassistant.helpers.entity import EntityCategory, async_generate_entity_i
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import slugify
 
-from .const import (
-    ATTR_LAST_UPDATE_TIME,
-    DOMAIN,
-)
+from .const import ATTR_LAST_UPDATE_TIME, DOMAIN
 from .coordinator import MyGasCoordinator
 from .entity import MyGasBaseCoordinatorEntity, MyGasSensorEntityDescription
 from .helpers import _to_date, _to_float, _to_str
@@ -131,19 +129,21 @@ class MyGasCounterCoordinatorEntity(MyGasBaseCoordinatorEntity, SensorEntity):
     entity_description: MyGasSensorEntityDescription
 
     def __init__(
-            self,
-            coordinator: MyGasCoordinator,
-            entity_description: MyGasSensorEntityDescription,
-            account_id: int,
-            lspu_group_id: int,
-            counter_id: int,
+        self,
+        coordinator: MyGasCoordinator,
+        entity_description: MyGasSensorEntityDescription,
+        account_id: int,
+        lspu_group_id: int,
+        counter_id: int,
     ) -> None:
         """Initialize the Entity."""
         super().__init__(coordinator, account_id, lspu_group_id, counter_id)
         self.entity_description = entity_description
-        ids = list(next(iter(self.device_info[ATTR_IDENTIFIERS]))) + [
-            entity_description.key
-        ]
+        device_info = self.device_info
+        assert device_info
+        identifiers = device_info.get(ATTR_IDENTIFIERS)
+        assert identifiers
+        ids = [*list(next(iter(identifiers))), entity_description.key]
         self._attr_unique_id = slugify("_".join(ids))
 
         self.entity_id = async_generate_entity_id(
@@ -154,9 +154,9 @@ class MyGasCounterCoordinatorEntity(MyGasBaseCoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return True if sensor is available."""
         return (
-                super().available
-                and self.coordinator.data is not None
-                and self.entity_description.avabl_fn(self)
+            super().available
+            and self.coordinator.data is not None
+            and self.entity_description.avabl_fn(self)
         )
 
     @callback
@@ -175,9 +175,9 @@ class MyGasCounterCoordinatorEntity(MyGasBaseCoordinatorEntity, SensorEntity):
 
 
 async def async_setup_entry(
-        hass: HomeAssistant,
-        entry: ConfigEntry,
-        async_add_entities: AddEntitiesCallback,
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up a config entry."""
 
@@ -187,17 +187,17 @@ async def async_setup_entry(
     for account_id in coordinator.get_accounts():
         for lspu_account_id in range(len(coordinator.get_lspu_accounts(account_id))):
             for counter_id in range(
-                    len(coordinator.get_counters(account_id, lspu_account_id))
+                len(coordinator.get_counters(account_id, lspu_account_id))
             ):
-                for entity_description in SENSOR_TYPES:
-                    entities.append(
-                        MyGasCounterCoordinatorEntity(
-                            coordinator,
-                            entity_description,
-                            account_id,
-                            lspu_account_id,
-                            counter_id,
-                        )
+                entities.extend(
+                    MyGasCounterCoordinatorEntity(
+                        coordinator,
+                        entity_description,
+                        account_id,
+                        lspu_account_id,
+                        counter_id,
                     )
+                    for entity_description in SENSOR_TYPES
+                )
 
     async_add_entities(entities, True)

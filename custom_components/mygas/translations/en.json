@@ -18,21 +18,9 @@
     },
     "abort": {
       "already_configured": "Account is already configured",
+      "reconfigure_successful": "Re-configuration was successful",
+      "unique_id_mismatch": "Please ensure you reconfigure against the same account.",
       "reauth_successful": "Re-authentication was successful"
-    }
-  },
-  "options": {
-    "step": {
-      "init": {
-        "title": "Options",
-        "description": "Change integration options",
-        "data": {
-          "auto_update": "Auto update"
-        },
-        "data_description": {
-          "auto_update": "Automatic data update every day at night"
-        }
-      }
     }
   },
   "entity": {

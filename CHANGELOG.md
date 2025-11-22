@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6] - 2025-11-22
+
+### Fixed
+
+ - Устаревший аргумент hass был убран из декоратора verify_domain_control.
+ - Добавлена возможность реконфигурации интеграции без удаления и повторного добавления.
+ - Обновлена возможность реавторизации интеграции при изменении учетных данных пользователя.
+ - Улучшена типизация кода.
+ - Добавлены yaml для автоматизации для нового Telegram bot (Home Assistant 2025.07).
+ - Исправлены мелкие ошибки и улучшена стабильность интеграции.  
+ - Обновлена документация.
+
 ## [1.5.1] - 2025-05-08
 
 ### Fixed

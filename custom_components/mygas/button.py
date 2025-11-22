@@ -1,4 +1,5 @@
 """Support for MyGas button."""
+
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
@@ -16,23 +17,19 @@ from homeassistant.helpers.entity import EntityCategory, async_generate_entity_i
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import slugify
 
-from .const import (
-    DOMAIN,
-    SERVICE_GET_BILL,
-    SERVICE_REFRESH,
-)
+from .const import DOMAIN, SERVICE_GET_BILL, SERVICE_REFRESH
 from .coordinator import MyGasCoordinator
 from .entity import MyGasBaseCoordinatorEntity
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class MyGasButtonRequiredKeysMixin:
     """Mixin for required keys."""
 
     async_press: Callable[[MyGasCoordinator, str], Awaitable]
 
 
-@dataclass
+@dataclass(kw_only=True, frozen=True)
 class MyGasButtonEntityDescription(
     ButtonEntityDescription, MyGasButtonRequiredKeysMixin
 ):
@@ -69,20 +66,23 @@ class MyGasButtonEntity(MyGasBaseCoordinatorEntity, ButtonEntity):
     entity_description: MyGasButtonEntityDescription
 
     def __init__(
-            self,
-            coordinator: MyGasCoordinator,
-            entity_description: MyGasButtonEntityDescription,
-            account_id: int,
-            lspu_group_id: int,
-            counter_id: int,
+        self,
+        coordinator: MyGasCoordinator,
+        entity_description: MyGasButtonEntityDescription,
+        account_id: int,
+        lspu_group_id: int,
+        counter_id: int,
     ) -> None:
         """Initialize the Entity."""
         super().__init__(coordinator, account_id, lspu_group_id, counter_id)
         self.entity_description = entity_description
-        ids = list(next(iter(self.device_info[ATTR_IDENTIFIERS]))) + [
-            entity_description.key
-        ]
-        self._attr_unique_id = slugify("_".join(ids))
+        # Safely get identifiers from device_info (device_info may be None
+        # and 'identifiers' is not a required TypedDict key)
+        identifiers = (self.device_info or {}).get(ATTR_IDENTIFIERS, set())
+        first_identifier = next(iter(identifiers), ())
+        ids = [*list(first_identifier), entity_description.key]
+        # Ensure all parts are strings before joining
+        self._attr_unique_id = slugify("_".join(str(part) for part in ids))
         self.entity_id = async_generate_entity_id(
             ENTITY_ID_FORMAT, self.unique_id, hass=coordinator.hass
         )
@@ -96,9 +96,9 @@ class MyGasButtonEntity(MyGasBaseCoordinatorEntity, ButtonEntity):
 
 
 async def async_setup_entry(
-        hass: HomeAssistant,
-        entry: ConfigEntry,
-        async_add_entities: AddEntitiesCallback,
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up a config entry."""
 
@@ -108,17 +108,17 @@ async def async_setup_entry(
     for account_id in coordinator.get_accounts():
         for lspu_account_id in range(len(coordinator.get_lspu_accounts(account_id))):
             for counter_id in range(
-                    len(coordinator.get_counters(account_id, lspu_account_id))
+                len(coordinator.get_counters(account_id, lspu_account_id))
             ):
-                for entity_description in BUTTON_DESCRIPTIONS:
-                    entities.append(
-                        MyGasButtonEntity(
-                            coordinator,
-                            entity_description,
-                            account_id,
-                            lspu_account_id,
-                            counter_id,
-                        )
+                entities.extend(
+                    MyGasButtonEntity(
+                        coordinator,
+                        entity_description,
+                        account_id,
+                        lspu_account_id,
+                        counter_id,
                     )
+                    for entity_description in BUTTON_DESCRIPTIONS
+                )
 
     async_add_entities(entities, True)

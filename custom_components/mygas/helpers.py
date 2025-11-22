@@ -1,4 +1,5 @@
 """MyGas helper function."""
+
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta
@@ -15,7 +16,7 @@ if TYPE_CHECKING:
 
 
 async def async_get_device_entry_by_device_id(
-        hass: HomeAssistant, device_id: str | None
+    hass: HomeAssistant, device_id: str | None
 ) -> dr.DeviceEntry:
     """Get device entry by device id."""
     if device_id is None:
@@ -30,7 +31,7 @@ async def async_get_device_entry_by_device_id(
 
 
 async def async_get_device_friendly_name(
-        hass: HomeAssistant, device_id: str | None
+    hass: HomeAssistant, device_id: str | None
 ) -> str | None:
     """Get device friendly name."""
 
@@ -39,7 +40,7 @@ async def async_get_device_friendly_name(
 
 
 async def async_get_coordinator(
-        hass: HomeAssistant, device_id: str | None
+    hass: HomeAssistant, device_id: str | None
 ) -> MyGasCoordinator:
     """Get coordinator for device id."""
 
@@ -77,22 +78,21 @@ def get_update_interval(hour: int, minute: int, second: int) -> timedelta:
     next_day = now + timedelta(days=1)
     next_time = next_day.replace(hour=hour, minute=minute, second=second)
     minutes_to_next_time = (next_time - now).total_seconds() / 60
-    interval = timedelta(minutes=minutes_to_next_time)
-    return interval
+    return timedelta(minutes=minutes_to_next_time)
+
 
 def get_bill_date() -> date:
     """Get first day of current month."""
     today = date.today()
-    first_day = today.replace(day=1)  # first day of current month
-    return first_day
+    return today.replace(day=1)  # first day of current month
+
 
 def get_previous_month() -> date:
     """Get first day of previous month."""
     today = date.today()
-    first_day = (today - timedelta(days=today.day)).replace(
+    return (today - timedelta(days=today.day)).replace(
         day=1
     )  # first day of the previous month
-    return first_day
 
 
 def _to_str(value: Any) -> str | None:
@@ -172,12 +172,4 @@ def _to_year(value: str | None, fmt: str) -> int | None:
 
 def make_device_id(account_number: str, counter_uuid: str) -> str:
     """Get device id."""
-    return slugify(
-        "_".join(
-            [
-                account_number,
-                ATTR_COUNTER,
-                counter_uuid,
-            ]
-        )
-    )
+    return slugify(f"{account_number}_{ATTR_COUNTER}_{counter_uuid}")

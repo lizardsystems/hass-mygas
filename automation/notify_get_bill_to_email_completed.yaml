@@ -1,29 +1,25 @@
 alias: "Мой Газ: Уведомление о счете за газ на электронную почту"
-description: "Уведомление о счете за газ на электронную почту от сервиса Мой Газ"
-trigger:
-  - platform: event
-    event_type: mygas_get_bill_completed
+description: Уведомление о счете за газ на электронную почту от сервиса Мой Газ
+triggers:
+  - event_type: mygas_get_bill_completed
+    trigger: event
 conditions:
   - condition: template
     value_template: "{{ trigger.event.data.email != none }}"
-action:
-  # уведомление в Телеграм
-  - service: telegram_bot.send_document
-    data:
-      authentication: digest
-      parse_mode: markdown
+actions:
+  - data:
       message: >-
-        Счет за газ для {{device_attr(trigger.event.data.device_id,
-        'name_by_user') or  device_attr(trigger.event.data.device_id,
-        'name') }} за {{trigger.event.data.date}} отправлен на
-        {{trigger.event.data.email}}.
-  # уведомление в веб-интерфейсе
-  - service: notify.persistent_notification
-    data:
+        🔥Газ. Счет для {{device_attr(trigger.event.data.device_id,
+        'name_by_user') or  device_attr(trigger.event.data.device_id, 'name') }}
+        за {{trigger.event.data.date}}
+      config_entry_id: <YOUR_TELEGRAM_BOT_CONFIG_ENTRY_ID>  # Replace with your Telegram Bot config entry ID
+    action: telegram_bot.send_message
+  - data:
       message: >-
-        Счет за газ для {{device_attr(trigger.event.data.device_id,
-        'name_by_user') or  device_attr(trigger.event.data.device_id,
-        'name') }} за {{trigger.event.data.date}} отправлен на
+        🔥Газ. Счет для {{device_attr(trigger.event.data.device_id,
+        'name_by_user') or  device_attr(trigger.event.data.device_id, 'name') }}
+        за {{trigger.event.data.date}} отправлен на
         {{trigger.event.data.email}}.
-
+    action: notify.persistent_notification
 mode: single
+

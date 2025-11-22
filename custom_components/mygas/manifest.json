@@ -4,10 +4,11 @@
   "codeowners": [
     "@lizardsystems"
   ],
+  "after_dependencies": ["http"],
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/lizardsystems/hass-mygas",
-  "homekit": {},
+  "integration_type": "hub",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/lizardsystems/hass-mygas/issues",
   "loggers": [
@@ -18,6 +19,6 @@
     "aiomygas==2.3.0"
   ],
   "ssdp": [],
-  "version": "1.5.1",
+  "version": "1.6",
   "zeroconf": []
 }

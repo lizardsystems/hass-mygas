@@ -1,4 +1,5 @@
 """Constants for the MyGas integration."""
+
 from __future__ import annotations
 
 from datetime import timedelta
@@ -19,9 +20,9 @@ UPDATE_HOUR_BEGIN: Final = 1
 UPDATE_HOUR_END: Final = 5
 UPDATE_INTERVAL: Final[timedelta] = timedelta(days=1)
 
-REQUEST_REFRESH_DEFAULT_COOLDOWN = 5
+PLATFORMS: list[Platform] = [Platform.BUTTON, Platform.SENSOR]
 
-PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BUTTON]
+REQUEST_REFRESH_DEFAULT_COOLDOWN = 5
 
 CONF_ACCOUNT: Final = "account"
 CONF_DATA: Final = "data"
