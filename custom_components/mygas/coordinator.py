@@ -246,7 +246,14 @@ class MyGasCoordinator(DataUpdateCoordinator):
     ) -> list[dict[str, Any]]:
         """Get counter data."""
         _accounts = self.get_lspu_accounts(account_id)[lspu_acount_id]
-        return _accounts.get(ATTR_COUNTERS, [])
+        counters = _accounts.get(ATTR_COUNTERS, [])
+        if not counters:
+            self.logger.warning(
+                "No counters found for account_id=%d lspu_account_id=%d",
+                account_id,
+                lspu_acount_id,
+            )
+        return counters
 
     async def find_account_by_device_id(
         self, device_id: str
