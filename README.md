@@ -4,6 +4,8 @@
 
 Этот репозиторий содержит настраиваемый компонент для Home Assistant для отображения данных из сервиса Мой Газ Смородина.
 
+**Важно!** Данная интеграция не поддерживает аккаунты пользователей, у которых нет подключенных приборов учета газа (счетчиков).
+
 # Установка
 
 **Способ 1.** [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=lizardsystems&repository=hass-mygas&category=integration)
