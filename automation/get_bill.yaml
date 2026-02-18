@@ -1,7 +1,7 @@
 alias: "Мой Газ: Запросить счета за газ"
-description: "Запросить счета за газ в сервисе Мой Газ"
+description: Запрос счета за газ по расписанию
 triggers:
-  - at: "01:00:00"
+  - at: "02:00:00"
     trigger: time
 conditions:
   - condition: template

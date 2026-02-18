@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-02-18
+
+### Added
+
+ - Добавлен Options Flow для настройки интервала обновления данных (1-168 часов, по умолчанию 24).
+ - Добавлены переводы исключений (translated exceptions) в сервисах.
+ - Добавлены секции `options` и `exceptions` в `strings.json` и файлы переводов.
+
+### Changed
+
+ - Декоратор `async_api_request_handler` разделён на `async_retry` (чистая логика повторов) и `async_api_request_handler` (маппинг исключений для координатора).
+ - Валидация в config flow использует `async_retry` и общий метод `_async_try_validate`, убрана дублированная обработка ошибок.
+ - Переименовано `avabl_fn` → `available_fn` в entity descriptions.
+ - Переименованы приватные хелперы `_to_str`, `_to_float`, `_to_int`, `_to_date` → `to_str`, `to_float`, `to_int`, `to_date`.
+ - Добавлены аннотации `Final` к константам `SERVICE_SEND_READINGS`, `ATTR_ELS`, `ATTR_IS_ELS`, `ATTR_LSPU_INFO_GROUP`.
+ - Убраны `after_dependencies` и `integration_type` из `manifest.json`.
+ - Версия обновлена до 2.1.0.
+
+### Fixed
+
+ - Исправлена ошибка `date.today()` → `dt_util.now().date()` в `helpers.py` и `coordinator.py` (учёт часового пояса HA).
+ - Исправлена мёртвая обработка исключений в `_async_update_data`: `MyGasAuthError` не достигал блока, т.к. уже конвертировался декоратором.
+ - Улучшена диагностика: редактирование `phone` и `email` в данных координатора.
+
 ## [2.0.0] - 2026-02-18
 
 ### Added

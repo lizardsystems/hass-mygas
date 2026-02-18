@@ -82,9 +82,9 @@ def mock_setup_entry() -> Generator[AsyncMock]:
 
 @pytest.fixture
 def mock_validate() -> Generator[AsyncMock]:
-    """Mock validate_input."""
+    """Mock _async_validate_credentials."""
     with patch(
-        "custom_components.mygas.config_flow.validate_input",
+        "custom_components.mygas.config_flow._async_validate_credentials",
         return_value={"title": MOCK_USERNAME},
     ) as mock:
         yield mock

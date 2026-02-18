@@ -75,7 +75,7 @@ class ServiceDescription:
 async def _async_handle_refresh(
     hass: HomeAssistant, service_call: ServiceCall, coordinator: MyGasCoordinator
 ) -> dict[str, Any]:
-    await coordinator.async_refresh()
+    await coordinator.async_force_refresh()
     return {}
 
 
@@ -84,25 +84,46 @@ async def _async_handle_send_readings(
 ) -> dict[str, Any]:
     value = get_float_value(hass, service_call.data.get(ATTR_VALUE))
     if value is None:
-        raise HomeAssistantError(f"{service_call.service}: Invalid reading value.")
+        raise HomeAssistantError(
+            translation_domain=DOMAIN,
+            translation_key="invalid_reading_value",
+            translation_placeholders={"service": service_call.service},
+        )
     value = int(ceil(value))  # round to greater integer
 
     device_id = service_call.data.get(ATTR_DEVICE_ID)
     result = await coordinator.async_send_readings(device_id, value)
 
     if result is None:
-        raise HomeAssistantError(f"{service_call.service}: Empty response from API.")
+        raise HomeAssistantError(
+            translation_domain=DOMAIN,
+            translation_key="service_failed",
+            translation_placeholders={
+                "service": service_call.service,
+                "error": "Empty response from API",
+            },
+        )
 
     if not isinstance(result, list) or len(result) == 0:
         raise HomeAssistantError(
-            f"{service_call.service}: Unrecognised response from API: {result}"
+            translation_domain=DOMAIN,
+            translation_key="service_failed",
+            translation_placeholders={
+                "service": service_call.service,
+                "error": f"Unrecognised response from API: {result}",
+            },
         )
 
     counters = result[0].get(ATTR_COUNTERS)
 
     if counters is None or not isinstance(counters, list) or len(counters) == 0:
         raise HomeAssistantError(
-            f"{service_call.service}: Unrecognised response from API: {result}"
+            translation_domain=DOMAIN,
+            translation_key="service_failed",
+            translation_placeholders={
+                "service": service_call.service,
+                "error": f"Unrecognised response from API: {result}",
+            },
         )
 
     counter = counters[0]  # single counter for account
@@ -111,7 +132,12 @@ async def _async_handle_send_readings(
     sent = counter.get(ATTR_SENT)
     if not sent:
         raise HomeAssistantError(
-            f"{service_call.service}: Readings not sent: {message}"
+            translation_domain=DOMAIN,
+            translation_key="service_failed",
+            translation_placeholders={
+                "service": service_call.service,
+                "error": f"Readings not sent: {message}",
+            },
         )
 
     return {ATTR_READINGS: value, ATTR_SENT: sent, ATTR_MESSAGE: message}
@@ -124,15 +150,26 @@ async def _async_handle_get_bill(
     bill_date = service_call.data.get(ATTR_DATE, get_bill_date())
     email = service_call.data.get(ATTR_EMAIL)
     if device_id is None:
-        raise HomeAssistantError("Device is undefined")
+        raise HomeAssistantError(
+            translation_domain=DOMAIN,
+            translation_key="device_undefined",
+        )
     result = await coordinator.async_get_bill(device_id, bill_date, email)
 
     if result is None:
-        raise HomeAssistantError(f"{service_call.service}: Empty response from API.")
+        raise HomeAssistantError(
+            translation_domain=DOMAIN,
+            translation_key="service_failed",
+            translation_placeholders={
+                "service": service_call.service,
+                "error": "Empty response from API",
+            },
+        )
     url = result.get(CONF_URL)
     if url is None and email is None:
         raise HomeAssistantError(
-            f"{service_call.service}: Unrecognised response from API: {result}"
+            translation_domain=DOMAIN,
+            translation_key="no_file_in_response",
         )
     return {
         ATTR_DATE: bill_date,
@@ -180,7 +217,9 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 "Service call '%s' successfully finished", service_call.service
             )
 
-        except (HomeAssistantError, MyGasApiError, MyGasAuthError) as exc:
+        except HomeAssistantError:
+            raise
+        except (MyGasApiError, MyGasAuthError) as exc:
             _LOGGER.error(
                 "Service call '%s' failed. Error: %s", service_call.service, exc
             )
@@ -194,7 +233,33 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 context=service_call.context,
             )
             raise HomeAssistantError(
-                f"Service call {service_call.service} failed. Error: {exc}"
+                translation_domain=DOMAIN,
+                translation_key="service_failed",
+                translation_placeholders={
+                    "service": service_call.service,
+                    "error": str(exc),
+                },
+            ) from exc
+        except Exception as exc:
+            _LOGGER.error(
+                "Service call '%s' failed. Error: %s", service_call.service, exc
+            )
+
+            hass.bus.async_fire(
+                event_type=f"{DOMAIN}_{service_call.service}_failed",
+                event_data={
+                    ATTR_DEVICE_ID: service_call.data.get(ATTR_DEVICE_ID),
+                    CONF_ERROR: str(exc),
+                },
+                context=service_call.context,
+            )
+            raise HomeAssistantError(
+                translation_domain=DOMAIN,
+                translation_key="service_failed",
+                translation_placeholders={
+                    "service": service_call.service,
+                    "error": str(exc),
+                },
             ) from exc
 
     for service in SERVICES.values():

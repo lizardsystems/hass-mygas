@@ -37,6 +37,15 @@
       "reauth_successful": "Re-authentication was successful"
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "scan_interval": "Update interval (hours)"
+        }
+      }
+    }
+  },
   "entity": {
     "sensor": {
       "account": {
@@ -127,6 +136,20 @@
       }
     }
   },
+  "exceptions": {
+    "service_failed": {
+      "message": "Service call {service} failed: {error}"
+    },
+    "invalid_reading_value": {
+      "message": "Invalid reading value for service {service}"
+    },
+    "no_file_in_response": {
+      "message": "No file in response from API"
+    },
+    "device_undefined": {
+      "message": "Device is undefined"
+    }
+  },
   "services": {
     "refresh": {
       "name": "Refresh",
@@ -166,7 +189,7 @@
         },
         "value": {
           "name": "Readings",
-          "description": "Meter readings, m³"
+          "description": "Meter readings, m\u00b3"
         }
       }
     }

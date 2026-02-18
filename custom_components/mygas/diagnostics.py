@@ -9,6 +9,7 @@ from homeassistant.core import HomeAssistant
 from . import MyGasConfigEntry
 
 TO_REDACT_CONFIG = {"username", "password"}
+TO_REDACT_DATA = {"phone", "email"}
 
 
 async def async_get_config_entry_diagnostics(
@@ -19,7 +20,10 @@ async def async_get_config_entry_diagnostics(
 
     return {
         "config_entry": async_redact_data(dict(entry.data), TO_REDACT_CONFIG),
-        "coordinator_data": async_redact_data(
-            coordinator.data or {}, TO_REDACT_CONFIG
-        ),
+        "coordinator": {
+            "last_update_success": coordinator.last_update_success,
+            "data": async_redact_data(
+                coordinator.data or {}, TO_REDACT_DATA
+            ),
+        },
     }

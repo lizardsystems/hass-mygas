@@ -37,6 +37,15 @@
       "reauth_successful": "Повторная аутентификация выполнена успешно."
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "scan_interval": "Интервал обновления (часы)"
+        }
+      }
+    }
+  },
   "entity": {
     "sensor": {
       "account": {
@@ -125,6 +134,20 @@
       "get_bill": {
         "name": "Получить счет"
       }
+    }
+  },
+  "exceptions": {
+    "service_failed": {
+      "message": "Ошибка вызова сервиса {service}: {error}"
+    },
+    "invalid_reading_value": {
+      "message": "Некорректное значение показаний для сервиса {service}"
+    },
+    "no_file_in_response": {
+      "message": "В ответе API отсутствует файл"
+    },
+    "device_undefined": {
+      "message": "Устройство не указано"
     }
   },
   "services": {

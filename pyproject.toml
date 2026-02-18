@@ -1,6 +1,6 @@
 [project]
 name = "hass-mygas"
-version = "2.0.0"
+version = "2.1.0"
 description = "MyGas custom integration for Home Assistant"
 readme = "README.md"
 license = "MIT"

@@ -25,7 +25,7 @@ from .const import (
     MANUFACTURER,
 )
 from .coordinator import MyGasCoordinator
-from .helpers import _to_date, _to_int, _to_str, make_account_device_id, make_device_id
+from .helpers import to_date, to_int, to_str, make_account_device_id, make_device_id
 
 
 class MyGasCoordinatorEntity(CoordinatorEntity[MyGasCoordinator]):
@@ -59,7 +59,7 @@ class MyGasSensorEntityDescription(SensorEntityDescription):
     attr_fn: Callable[
         [MyGasCoordinatorEntity], dict[str, StateType | datetime | date]
     ] = lambda _: {}
-    avabl_fn: Callable[[MyGasCoordinatorEntity], bool] = lambda _: True
+    available_fn: Callable[[MyGasCoordinatorEntity], bool] = lambda _: True
 
 
 class MyGasAccountCoordinatorEntity(MyGasCoordinatorEntity):
@@ -159,26 +159,26 @@ class MyGasBaseCoordinatorEntity(MyGasCoordinatorEntity):
             self.counter_id
         ]
         return {
-            "Модель": _to_str(counter.get("model")),
-            "Серийный номер": _to_str(counter.get("serialNumber")),
-            "Состояние счетчика": _to_str(counter.get("state")),
-            "Тип оборудования": _to_str(counter.get("equipmentKind")),
-            "Расположение": _to_str(counter.get("position")),
-            "Ресурс": _to_str(counter.get("serviceName")),
-            "Тарифность": _to_int(counter.get("numberOfRates")),
-            "Дата очередной поверки": _to_date(
+            "Модель": to_str(counter.get("model")),
+            "Серийный номер": to_str(counter.get("serialNumber")),
+            "Состояние счетчика": to_str(counter.get("state")),
+            "Тип оборудования": to_str(counter.get("equipmentKind")),
+            "Расположение": to_str(counter.get("position")),
+            "Ресурс": to_str(counter.get("serviceName")),
+            "Тарифность": to_int(counter.get("numberOfRates")),
+            "Дата очередной поверки": to_date(
                 counter.get("checkDate"), "%Y-%m-%dT%H:%M:%S"
             ),
-            "Плановая дата ТО": _to_date(
+            "Плановая дата ТО": to_date(
                 counter.get("techSupportDate"), "%Y-%m-%dT%H:%M:%S"
             ),
-            "Дата установки пломбы": _to_date(
+            "Дата установки пломбы": to_date(
                 counter.get("sealDate"), "%Y-%m-%dT%H:%M:%S"
             ),
-            "Дата заводской пломбы": _to_date(
+            "Дата заводской пломбы": to_date(
                 counter.get("factorySealDate"), "%Y-%m-%dT%H:%M:%S"
             ),
-            "Дата изготовления прибора": _to_date(
+            "Дата изготовления прибора": to_date(
                 counter.get("commissionedOn"), "%Y-%m-%dT%H:%M:%S"
             ),
         }

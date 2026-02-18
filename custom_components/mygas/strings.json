@@ -37,6 +37,15 @@
       "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]"
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "scan_interval": "Update interval (hours)"
+        }
+      }
+    }
+  },
   "entity": {
     "sensor": {
       "account": {
@@ -125,6 +134,20 @@
       "get_bill": {
         "name": "Get Bill"
       }
+    }
+  },
+  "exceptions": {
+    "service_failed": {
+      "message": "Service call {service} failed: {error}"
+    },
+    "invalid_reading_value": {
+      "message": "Invalid reading value for service {service}"
+    },
+    "no_file_in_response": {
+      "message": "No file in response from API"
+    },
+    "device_undefined": {
+      "message": "Device is undefined"
     }
   },
   "services": {

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections.abc import Awaitable, Callable, Coroutine
 from functools import wraps
 from random import randrange
@@ -22,60 +23,89 @@ _MyGasCoordinatorT = TypeVar("_MyGasCoordinatorT", bound="MyGasCoordinator")
 _R = TypeVar("_R")
 _P = ParamSpec("_P")
 
+_LOGGER = logging.getLogger(__name__)
+
+
+def async_retry(
+    func: Callable[_P, Awaitable[_R]],
+) -> Callable[_P, Coroutine[Any, Any, _R]]:
+    """Retry async function on transient errors (timeout, API).
+
+    MyGasAuthError is never retried — it propagates immediately.
+    """
+
+    @wraps(func)
+    async def wrapper(*args: _P.args, **kwargs: _P.kwargs) -> _R:
+        tries = 0
+        api_timeout = API_TIMEOUT
+        api_retry_delay = API_RETRY_DELAY
+        last_error: Exception | None = None
+        while True:
+            tries += 1
+            try:
+                async with asyncio.timeout(api_timeout):
+                    return await func(*args, **kwargs)
+
+            except MyGasAuthError:
+                raise
+
+            except TimeoutError as exc:
+                last_error = exc
+                api_timeout = tries * API_TIMEOUT
+                _LOGGER.debug(
+                    "Function %s: Timeout connecting to MyGas API",
+                    func.__name__,
+                )
+
+            except MyGasApiError as exc:
+                last_error = exc
+                _LOGGER.debug(
+                    "Function %s: API error (%s)",
+                    func.__name__,
+                    exc,
+                )
+
+            if tries >= API_MAX_TRIES:
+                raise MyGasApiError(
+                    f"Failed after {API_MAX_TRIES} attempts: {func.__name__}"
+                ) from last_error
+
+            _LOGGER.warning(
+                "Attempt %d/%d. Wait %d seconds and try again",
+                tries,
+                API_MAX_TRIES,
+                api_retry_delay,
+            )
+            await asyncio.sleep(api_retry_delay)
+            api_retry_delay += API_RETRY_DELAY + randrange(API_RETRY_DELAY)
+
+    return wrapper
+
 
 def async_api_request_handler(
     method: Callable[Concatenate[_MyGasCoordinatorT, _P], Awaitable[_R]],
 ) -> Callable[Concatenate[_MyGasCoordinatorT, _P], Coroutine[Any, Any, _R]]:
-    """Handle API errors."""
+    """Handle API errors with retries for coordinator methods.
+
+    Wraps async_retry with coordinator-specific exception mapping:
+    - MyGasAuthError → ConfigEntryAuthFailed
+    - MyGasApiError → UpdateFailed
+    """
+    retried = async_retry(method)
 
     @wraps(method)
     async def wrapper(
         self: _MyGasCoordinatorT, *args: _P.args, **kwargs: _P.kwargs
     ) -> _R:
-        """Wrap an API method."""
         try:
-            tries = 0
-            api_timeout = API_TIMEOUT
-            api_retry_delay = API_RETRY_DELAY
-            while True:
-                tries += 1
-                try:
-                    async with asyncio.timeout(api_timeout):
-                        result = await method(self, *args, **kwargs)
-
-                    if result is not None:
-                        return result
-
-                    self.logger.error(
-                        "API error while execute function %s", method.__name__
-                    )
-                    raise MyGasApiError(
-                        f"API error while execute function {method.__name__}"
-                    )
-
-                except TimeoutError:
-                    api_timeout = tries * API_TIMEOUT
-                    self.logger.debug(
-                        "Function %s: Timeout connecting to MyGas", method.__name__
-                    )
-
-                if tries >= API_MAX_TRIES:
-                    raise UpdateFailed(
-                        f"Invalid response from MyGas API: {method.__name__}"
-                    )
-
-                self.logger.warning(
-                    "Attempt %d/%d. Wait %d seconds and try again",
-                    tries,
-                    API_MAX_TRIES,
-                    api_retry_delay,
-                )
-                await asyncio.sleep(api_retry_delay)
-                api_retry_delay += API_RETRY_DELAY + randrange(API_RETRY_DELAY)
-
+            return await retried(self, *args, **kwargs)
         except MyGasAuthError as exc:
-            raise ConfigEntryAuthFailed("MyGas auth error") from exc
+            raise ConfigEntryAuthFailed(
+                f"MyGas auth error: {exc}"
+            ) from exc
         except MyGasApiError as exc:
-            raise UpdateFailed(f"Invalid response from MyGas API: {exc}") from exc
+            raise UpdateFailed(
+                f"MyGas API error: {exc}"
+            ) from exc
 
     return wrapper

@@ -1,13 +1,11 @@
 {
   "domain": "mygas",
   "name": "MyGas",
-  "after_dependencies": ["http"],
   "codeowners": [
     "@lizardsystems"
   ],
   "config_flow": true,
   "documentation": "https://github.com/lizardsystems/hass-mygas",
-  "integration_type": "hub",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/lizardsystems/hass-mygas/issues",
   "loggers": [
@@ -17,5 +15,5 @@
   "requirements": [
     "aiomygas==2.4"
   ],
-  "version": "2.0.0"
+  "version": "2.1.0"
 }

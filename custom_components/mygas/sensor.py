@@ -21,9 +21,9 @@ from .entity import (
     MyGasSensorEntityDescription,
 )
 from .helpers import (
-    _to_date,
-    _to_float,
-    _to_str,
+    to_date,
+    to_float,
+    to_str,
     make_account_device_id,
     make_device_id,
     make_entity_unique_id,
@@ -33,8 +33,8 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
     MyGasSensorEntityDescription(
         key="account",
         entity_category=EntityCategory.DIAGNOSTIC,
-        value_fn=lambda device: _to_str(device.get_lspu_account_data().get("account")),
-        avabl_fn=lambda device: "account" in device.get_lspu_account_data(),
+        value_fn=lambda device: to_str(device.get_lspu_account_data().get("account")),
+        available_fn=lambda device: "account" in device.get_lspu_account_data(),
         translation_key="account",
         attr_fn=lambda device: {
             parameter["name"]: parameter["value"]
@@ -45,48 +45,48 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
         key="balance",
         device_class=SensorDeviceClass.MONETARY,
         native_unit_of_measurement="RUB",
-        value_fn=lambda device: _to_float(
+        value_fn=lambda device: to_float(
             device.get_lspu_account_data().get("balance")
         ),
-        avabl_fn=lambda device: "balance" in device.get_lspu_account_data(),
+        available_fn=lambda device: "balance" in device.get_lspu_account_data(),
         translation_key="balance",
     ),
     MyGasSensorEntityDescription(
         key="charged",
         device_class=SensorDeviceClass.MONETARY,
         native_unit_of_measurement="RUB",
-        value_fn=lambda device: _to_float(
+        value_fn=lambda device: to_float(
             (device.get_lspu_account_data().get("balances") or [{}])[0].get("chargedSum")
         ),
-        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        available_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
         translation_key="charged",
     ),
     MyGasSensorEntityDescription(
         key="paid",
         device_class=SensorDeviceClass.MONETARY,
         native_unit_of_measurement="RUB",
-        value_fn=lambda device: _to_float(
+        value_fn=lambda device: to_float(
             (device.get_lspu_account_data().get("balances") or [{}])[0].get("paidSum")
         ),
-        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        available_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
         translation_key="paid",
     ),
     MyGasSensorEntityDescription(
         key="debt",
         device_class=SensorDeviceClass.MONETARY,
         native_unit_of_measurement="RUB",
-        value_fn=lambda device: _to_float(
+        value_fn=lambda device: to_float(
             (device.get_lspu_account_data().get("balances") or [{}])[0].get("debtSum")
         ),
-        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        available_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
         translation_key="debt",
     ),
     MyGasSensorEntityDescription(
         key="balance_period",
-        value_fn=lambda device: _to_str(
+        value_fn=lambda device: to_str(
             (device.get_lspu_account_data().get("balances") or [{}])[0].get("name")
         ),
-        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        available_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
         translation_key="balance_period",
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
@@ -94,11 +94,11 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
     MyGasSensorEntityDescription(
         key="balance_date",
         device_class=SensorDeviceClass.DATE,
-        value_fn=lambda device: _to_date(
+        value_fn=lambda device: to_date(
             (device.get_lspu_account_data().get("balances") or [{}])[0].get("date"),
             "%Y-%m-%d",
         ),
-        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        available_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
         translation_key="balance_date",
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False,
@@ -107,10 +107,10 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
         key="balance_start",
         device_class=SensorDeviceClass.MONETARY,
         native_unit_of_measurement="RUB",
-        value_fn=lambda device: _to_float(
+        value_fn=lambda device: to_float(
             (device.get_lspu_account_data().get("balances") or [{}])[0].get("balanceStartSum")
         ),
-        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        available_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
         translation_key="balance_start",
         entity_registry_enabled_default=False,
     ),
@@ -118,10 +118,10 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
         key="balance_end",
         device_class=SensorDeviceClass.MONETARY,
         native_unit_of_measurement="RUB",
-        value_fn=lambda device: _to_float(
+        value_fn=lambda device: to_float(
             (device.get_lspu_account_data().get("balances") or [{}])[0].get("balanceEndSum")
         ),
-        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        available_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
         translation_key="balance_end",
         entity_registry_enabled_default=False,
     ),
@@ -130,10 +130,10 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfVolume.CUBIC_METERS,
         suggested_display_precision=1,
         device_class=SensorDeviceClass.GAS,
-        value_fn=lambda device: _to_float(
+        value_fn=lambda device: to_float(
             (device.get_lspu_account_data().get("balances") or [{}])[0].get("chargedVolume")
         ),
-        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        available_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
         translation_key="charged_volume",
         entity_registry_enabled_default=False,
     ),
@@ -141,10 +141,10 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
         key="circulation",
         device_class=SensorDeviceClass.MONETARY,
         native_unit_of_measurement="RUB",
-        value_fn=lambda device: _to_float(
+        value_fn=lambda device: to_float(
             (device.get_lspu_account_data().get("balances") or [{}])[0].get("circulationSum")
         ),
-        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        available_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
         translation_key="circulation",
         entity_registry_enabled_default=False,
     ),
@@ -152,10 +152,10 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
         key="forgiven_debt",
         device_class=SensorDeviceClass.MONETARY,
         native_unit_of_measurement="RUB",
-        value_fn=lambda device: _to_float(
+        value_fn=lambda device: to_float(
             (device.get_lspu_account_data().get("balances") or [{}])[0].get("forgivenDebt")
         ),
-        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        available_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
         translation_key="forgiven_debt",
         entity_registry_enabled_default=False,
     ),
@@ -163,10 +163,10 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
         key="planned",
         device_class=SensorDeviceClass.MONETARY,
         native_unit_of_measurement="RUB",
-        value_fn=lambda device: _to_float(
+        value_fn=lambda device: to_float(
             (device.get_lspu_account_data().get("balances") or [{}])[0].get("plannedSum")
         ),
-        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        available_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
         translation_key="planned",
         entity_registry_enabled_default=False,
     ),
@@ -174,10 +174,10 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
         key="privilege",
         device_class=SensorDeviceClass.MONETARY,
         native_unit_of_measurement="RUB",
-        value_fn=lambda device: _to_float(
+        value_fn=lambda device: to_float(
             (device.get_lspu_account_data().get("balances") or [{}])[0].get("privilegeSum")
         ),
-        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        available_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
         translation_key="privilege",
         entity_registry_enabled_default=False,
     ),
@@ -186,10 +186,10 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfVolume.CUBIC_METERS,
         suggested_display_precision=1,
         device_class=SensorDeviceClass.GAS,
-        value_fn=lambda device: _to_float(
+        value_fn=lambda device: to_float(
             (device.get_lspu_account_data().get("balances") or [{}])[0].get("privilegeVolume")
         ),
-        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        available_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
         translation_key="privilege_volume",
         entity_registry_enabled_default=False,
     ),
@@ -197,10 +197,10 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
         key="restored_debt",
         device_class=SensorDeviceClass.MONETARY,
         native_unit_of_measurement="RUB",
-        value_fn=lambda device: _to_float(
+        value_fn=lambda device: to_float(
             (device.get_lspu_account_data().get("balances") or [{}])[0].get("restoredDebt")
         ),
-        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        available_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
         translation_key="restored_debt",
         entity_registry_enabled_default=False,
     ),
@@ -208,10 +208,10 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
         key="payment_adjustments",
         device_class=SensorDeviceClass.MONETARY,
         native_unit_of_measurement="RUB",
-        value_fn=lambda device: _to_float(
+        value_fn=lambda device: to_float(
             (device.get_lspu_account_data().get("balances") or [{}])[0].get("paymentAdjustments")
         ),
-        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        available_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
         translation_key="payment_adjustments",
         entity_registry_enabled_default=False,
     ),
@@ -219,10 +219,10 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
         key="end_balance_apgp",
         device_class=SensorDeviceClass.MONETARY,
         native_unit_of_measurement="RUB",
-        value_fn=lambda device: _to_float(
+        value_fn=lambda device: to_float(
             (device.get_lspu_account_data().get("balances") or [{}])[0].get("endBalanceApgp")
         ),
-        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        available_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
         translation_key="end_balance_apgp",
         entity_registry_enabled_default=False,
     ),
@@ -230,10 +230,10 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
         key="prepayment_charged",
         device_class=SensorDeviceClass.MONETARY,
         native_unit_of_measurement="RUB",
-        value_fn=lambda device: _to_float(
+        value_fn=lambda device: to_float(
             (device.get_lspu_account_data().get("balances") or [{}])[0].get("prepaymentChargedAccumSum")
         ),
-        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        available_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
         translation_key="prepayment_charged",
         entity_registry_enabled_default=False,
     ),
@@ -241,14 +241,14 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
         key="current_timestamp",
         device_class=SensorDeviceClass.TIMESTAMP,
         value_fn=lambda device: device.coordinator.data.get(ATTR_LAST_UPDATE_TIME),
-        avabl_fn=lambda device: ATTR_LAST_UPDATE_TIME in device.coordinator.data,
+        available_fn=lambda device: ATTR_LAST_UPDATE_TIME in device.coordinator.data,
         entity_category=EntityCategory.DIAGNOSTIC,
         translation_key="current_timestamp",
     ),
     MyGasSensorEntityDescription(
         key="counter",
         value_fn=lambda device: device.get_counter_data().get("name"),
-        avabl_fn=lambda device: "name" in device.get_counter_data(),
+        available_fn=lambda device: "name" in device.get_counter_data(),
         translation_key="counter",
         entity_category=EntityCategory.DIAGNOSTIC,
         attr_fn=lambda device: device.get_counter_attr(),
@@ -258,27 +258,27 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfVolume.CUBIC_METERS,
         suggested_display_precision=1,
         device_class=SensorDeviceClass.GAS,
-        value_fn=lambda device: _to_float(device.get_counter_data().get("averageRate")),
-        avabl_fn=lambda device: "averageRate" in device.get_counter_data(),
+        value_fn=lambda device: to_float(device.get_counter_data().get("averageRate")),
+        available_fn=lambda device: "averageRate" in device.get_counter_data(),
         translation_key="average_rate",
     ),
     MyGasSensorEntityDescription(
         key="price",
         native_unit_of_measurement="RUB/m\u00b3",
         device_class=SensorDeviceClass.MONETARY,
-        value_fn=lambda device: _to_float(
+        value_fn=lambda device: to_float(
             device.get_counter_data().get("price", {}).get("day")
         ),
-        avabl_fn=lambda device: "price" in device.get_counter_data(),
+        available_fn=lambda device: "price" in device.get_counter_data(),
         translation_key="price",
     ),
     MyGasSensorEntityDescription(
         key="readings_date",
         device_class=SensorDeviceClass.DATE,
-        value_fn=lambda device: _to_date(
+        value_fn=lambda device: to_date(
             device.get_latest_readings().get("date"), "%Y-%m-%dT%H:%M:%S"
         ),
-        avabl_fn=lambda device: "date" in device.get_latest_readings(),
+        available_fn=lambda device: "date" in device.get_latest_readings(),
         translation_key="readings_date",
     ),
     MyGasSensorEntityDescription(
@@ -287,8 +287,8 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
         suggested_display_precision=1,
         device_class=SensorDeviceClass.GAS,
         state_class=SensorStateClass.TOTAL,
-        value_fn=lambda device: _to_float(device.get_latest_readings().get("valueDay")),
-        avabl_fn=lambda device: "valueDay" in device.get_latest_readings(),
+        value_fn=lambda device: to_float(device.get_latest_readings().get("valueDay")),
+        available_fn=lambda device: "valueDay" in device.get_latest_readings(),
         translation_key="readings",
     ),
     MyGasSensorEntityDescription(
@@ -297,8 +297,8 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
         suggested_display_precision=1,
         device_class=SensorDeviceClass.GAS,
         state_class=SensorStateClass.TOTAL,
-        value_fn=lambda device: _to_float(device.get_latest_readings().get("rate")),
-        avabl_fn=lambda device: "rate" in device.get_latest_readings(),
+        value_fn=lambda device: to_float(device.get_latest_readings().get("rate")),
+        available_fn=lambda device: "rate" in device.get_latest_readings(),
         translation_key="consumption",
     ),
 )
@@ -343,7 +343,7 @@ class MyGasAccountSensorEntity(MyGasAccountCoordinatorEntity, SensorEntity):
         return (
             super().available
             and self.coordinator.data is not None
-            and self.entity_description.avabl_fn(self)
+            and self.entity_description.available_fn(self)
         )
 
     @callback
@@ -382,7 +382,7 @@ class MyGasCounterCoordinatorEntity(MyGasBaseCoordinatorEntity, SensorEntity):
         return (
             super().available
             and self.coordinator.data is not None
-            and self.entity_description.avabl_fn(self)
+            and self.entity_description.available_fn(self)
         )
 
     @callback

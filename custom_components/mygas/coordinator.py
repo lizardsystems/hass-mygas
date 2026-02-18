@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-from datetime import date
 import logging
-from random import randrange
+from datetime import date, timedelta
 from typing import Any
 
 from aiomygas import MyGasApi, SimpleMyGasAuth
-from aiomygas.exceptions import MyGasAuthError
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
@@ -32,15 +29,14 @@ from .const import (
     ATTR_UUID,
     CONF_ACCOUNT,
     CONF_ACCOUNTS,
-    CONF_AUTO_UPDATE,
     CONF_INFO,
+    CONF_SCAN_INTERVAL,
+    DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     REQUEST_REFRESH_DEFAULT_COOLDOWN,
-    UPDATE_HOUR_BEGIN,
-    UPDATE_HOUR_END,
 )
 from .decorators import async_api_request_handler
-from .helpers import get_update_interval, make_account_device_id, make_device_id
+from .helpers import make_account_device_id, make_device_id
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -75,7 +71,10 @@ class MyGasCoordinator(DataUpdateCoordinator):
         session = async_get_clientsession(hass)
         self.username = config_entry.data[CONF_USERNAME]
         self.password = config_entry.data[CONF_PASSWORD]
-        self.auto_update = config_entry.data.get(CONF_AUTO_UPDATE, False)
+        scan_interval_hours: int = config_entry.options.get(
+            CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
+        )
+        self.update_interval = timedelta(hours=scan_interval_hours)
         auth = SimpleMyGasAuth(self.username, self.password, session)
         self._api = MyGasApi(auth)
 
@@ -139,8 +138,8 @@ class MyGasCoordinator(DataUpdateCoordinator):
                 )
                 return None
 
-        except (ConfigEntryAuthFailed, MyGasAuthError) as exc:
-            raise ConfigEntryAuthFailed("Incorrect Login or Password") from exc
+        except ConfigEntryAuthFailed:
+            raise
         except Exception as exc:  # pylint: disable=broad-except
             raise UpdateFailed(f"Error communicating with API: {exc}") from exc
         else:
@@ -150,17 +149,13 @@ class MyGasCoordinator(DataUpdateCoordinator):
             return new_data
         finally:
             self.force_next_update = False
-            if self.auto_update:
-                self.update_interval = get_update_interval(
-                    randrange(UPDATE_HOUR_BEGIN, UPDATE_HOUR_END),
-                    randrange(60),
-                    randrange(60),
-                )
-                _LOGGER.debug(
-                    "Update interval: %s seconds", self.update_interval.total_seconds()
-                )
-            else:
-                self.update_interval = None
+            scan_interval_hours: int = self.config_entry.options.get(
+                CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
+            )
+            self.update_interval = timedelta(hours=scan_interval_hours)
+            _LOGGER.debug(
+                "Update interval: %s hours", scan_interval_hours
+            )
 
     async def retrieve_els_accounts_info(
         self, accounts_info: dict[str, Any]
@@ -344,7 +339,7 @@ class MyGasCoordinator(DataUpdateCoordinator):
     ) -> dict[str, Any] | None:
         """Get receipt data."""
         if bill_date is None:
-            bill_date = date.today()
+            bill_date = dt_util.now().date()
         date_iso_short = bill_date.strftime("%Y-%m-%d")
         account_id, *_ = await self.find_account_by_device_id(device_id)
         if account_id is not None:

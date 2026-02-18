@@ -4,16 +4,18 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, patch
 
 import pytest
+from aiomygas.exceptions import MyGasApiError, MyGasAuthError
 from homeassistant.config_entries import SOURCE_USER
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.mygas.const import DOMAIN
-from custom_components.mygas.exceptions import CannotConnect, InvalidAuth
+from custom_components.mygas.const import CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL, DOMAIN
 
 from .const import MOCK_PASSWORD, MOCK_USERNAME
+
+MOCK_VALIDATE_PATH = "custom_components.mygas.config_flow._async_validate_credentials"
 
 
 # ---------------------------------------------------------------------------
@@ -65,8 +67,8 @@ async def test_user_flow_cannot_connect(
 ) -> None:
     """Test user flow when connection fails."""
     with patch(
-        "custom_components.mygas.config_flow.validate_input",
-        side_effect=CannotConnect,
+        MOCK_VALIDATE_PATH,
+        side_effect=MyGasApiError("connection failed"),
     ):
         result = await hass.config_entries.flow.async_init(
             DOMAIN, context={"source": SOURCE_USER}
@@ -89,8 +91,8 @@ async def test_user_flow_invalid_auth(
 ) -> None:
     """Test user flow when authentication fails."""
     with patch(
-        "custom_components.mygas.config_flow.validate_input",
-        side_effect=InvalidAuth,
+        MOCK_VALIDATE_PATH,
+        side_effect=MyGasAuthError("invalid auth"),
     ):
         result = await hass.config_entries.flow.async_init(
             DOMAIN, context={"source": SOURCE_USER}
@@ -113,7 +115,7 @@ async def test_user_flow_unknown_error(
 ) -> None:
     """Test user flow when an unknown error occurs."""
     with patch(
-        "custom_components.mygas.config_flow.validate_input",
+        MOCK_VALIDATE_PATH,
         side_effect=RuntimeError("unexpected"),
     ):
         result = await hass.config_entries.flow.async_init(
@@ -192,8 +194,8 @@ async def test_reauth_flow_invalid_auth(
     result = await mock_config_entry.start_reauth_flow(hass)
 
     with patch(
-        "custom_components.mygas.config_flow.validate_input",
-        side_effect=InvalidAuth,
+        MOCK_VALIDATE_PATH,
+        side_effect=MyGasAuthError("invalid auth"),
     ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"],
@@ -214,8 +216,8 @@ async def test_reauth_flow_cannot_connect(
     result = await mock_config_entry.start_reauth_flow(hass)
 
     with patch(
-        "custom_components.mygas.config_flow.validate_input",
-        side_effect=CannotConnect,
+        MOCK_VALIDATE_PATH,
+        side_effect=MyGasApiError("connection failed"),
     ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"],
@@ -265,8 +267,8 @@ async def test_reconfigure_flow_invalid_auth(
     result = await mock_config_entry.start_reconfigure_flow(hass)
 
     with patch(
-        "custom_components.mygas.config_flow.validate_input",
-        side_effect=InvalidAuth,
+        MOCK_VALIDATE_PATH,
+        side_effect=MyGasAuthError("invalid auth"),
     ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"],
@@ -290,8 +292,8 @@ async def test_reconfigure_flow_cannot_connect(
     result = await mock_config_entry.start_reconfigure_flow(hass)
 
     with patch(
-        "custom_components.mygas.config_flow.validate_input",
-        side_effect=CannotConnect,
+        MOCK_VALIDATE_PATH,
+        side_effect=MyGasApiError("connection failed"),
     ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"],
@@ -303,3 +305,52 @@ async def test_reconfigure_flow_cannot_connect(
 
     assert result["type"] is FlowResultType.FORM
     assert result["errors"] == {"base": "cannot_connect"}
+
+
+# ---------------------------------------------------------------------------
+# Options flow
+# ---------------------------------------------------------------------------
+
+
+async def test_options_flow_show_form(
+    hass: HomeAssistant,
+    mock_config_entry: MockConfigEntry,
+    mock_api: AsyncMock,
+    mock_auth: AsyncMock,
+) -> None:
+    """Test options flow shows form with current value."""
+    mock_config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(mock_config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    result = await hass.config_entries.options.async_init(
+        mock_config_entry.entry_id,
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["step_id"] == "init"
+
+
+async def test_options_flow_set_scan_interval(
+    hass: HomeAssistant,
+    mock_config_entry: MockConfigEntry,
+    mock_api: AsyncMock,
+    mock_auth: AsyncMock,
+) -> None:
+    """Test options flow saves scan_interval."""
+    mock_config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(mock_config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    result = await hass.config_entries.options.async_init(
+        mock_config_entry.entry_id,
+    )
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        user_input={CONF_SCAN_INTERVAL: 12},
+    )
+
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["data"] == {CONF_SCAN_INTERVAL: 12}
+    assert mock_config_entry.options[CONF_SCAN_INTERVAL] == 12

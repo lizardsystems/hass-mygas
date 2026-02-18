@@ -3,7 +3,9 @@ description: Уведомление о счете за газ от сервис�
 triggers:
   - event_type: mygas_get_bill_completed
     trigger: event
-conditions: []
+conditions:
+  - condition: template
+    value_template: "{{ trigger.event.data.url != none }}"
 actions:
   - data:
       url: "{{trigger.event.data.url}}"

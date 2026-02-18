@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.core import HomeAssistant
@@ -49,26 +49,17 @@ def get_float_value(hass: HomeAssistant, entity_id: str | None) -> float | None:
     if entity_id is not None:
         cur_state = hass.states.get(entity_id)
         if cur_state is not None:
-            return _to_float(cur_state.state)
+            return to_float(cur_state.state)
     return None
-
-
-def get_update_interval(hour: int, minute: int, second: int) -> timedelta:
-    """Get update interval to time."""
-    now = dt_util.now()
-    next_day = now + timedelta(days=1)
-    next_time = next_day.replace(hour=hour, minute=minute, second=second)
-    minutes_to_next_time = (next_time - now).total_seconds() / 60
-    return timedelta(minutes=minutes_to_next_time)
 
 
 def get_bill_date() -> date:
     """Get first day of current month."""
-    today = date.today()
+    today = dt_util.now().date()
     return today.replace(day=1)  # first day of current month
 
 
-def _to_str(value: Any) -> str | None:
+def to_str(value: Any) -> str | None:
     """Convert value to string."""
     if value is None:
         return None
@@ -80,7 +71,7 @@ def _to_str(value: Any) -> str | None:
     return s
 
 
-def _to_float(value: Any) -> float | None:
+def to_float(value: Any) -> float | None:
     """Convert value to float."""
     if value is None:
         return None
@@ -92,7 +83,7 @@ def _to_float(value: Any) -> float | None:
     return f
 
 
-def _to_int(value: Any) -> int | None:
+def to_int(value: Any) -> int | None:
     """Convert value to int."""
     if value is None:
         return None
@@ -104,7 +95,7 @@ def _to_int(value: Any) -> int | None:
     return i
 
 
-def _to_date(value: str | None, fmt: str) -> date | None:
+def to_date(value: str | None, fmt: str) -> date | None:
     """Convert string value to date."""
     if not value:
         return None
