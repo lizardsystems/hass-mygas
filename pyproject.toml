@@ -1,0 +1,44 @@
+[project]
+name = "hass-mygas"
+version = "2.0.0"
+description = "MyGas custom integration for Home Assistant"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.13"
+keywords = [
+    "gas",
+    "home-assistant",
+    "mygas",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Framework :: AsyncIO",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Home Automation",
+    "Typing :: Typed",
+]
+
+[[project.authors]]
+name = "LizardSystems"
+
+[project.urls]
+Repository = "https://github.com/lizardsystems/hass-mygas"
+Documentation = "https://github.com/lizardsystems/hass-mygas"
+"Bug Tracker" = "https://github.com/lizardsystems/hass-mygas/issues"
+Changelog = "https://github.com/lizardsystems/hass-mygas/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-homeassistant-custom-component",
+    "aiomygas==2.4",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

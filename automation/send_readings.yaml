@@ -1,23 +1,20 @@
 alias: "Мой Газ: Отправить показания по газу"
 description: "Отправить показания по газу в сервис Мой Газ"
-trigger:
-  - platform: time
-    at: "02:00:00"
-condition:
+triggers:
+  - at: "02:00:00"
+    trigger: time
+conditions:
   - condition: template
     value_template: "{{ now().day == 24 }}"
-action:
-  - alias: "Мой Газ: Отправить показания (Дом)"
-    service: mygas.send_readings
+actions:
+  - alias: "Мой Газ: Отправить показания"
+    action: mygas.send_readings
     data:
-      value: <YOUR_SENSOR_ID>
+      value: <YOUR_READINGS_SENSOR>
       device_id: <YOUR_DEVICE_ID>
   - delay:
-      hours: 0
       minutes: 10
-      seconds: 0
-      milliseconds: 0
-  - service: mygas.refresh
+  - action: mygas.refresh
     data:
       device_id: <YOUR_DEVICE_ID>
 mode: single

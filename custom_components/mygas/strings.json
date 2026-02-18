@@ -5,36 +5,36 @@
       "user": {
         "title": "Configure My Gas",
         "data": {
-          "username": "Username",
-          "password": "Password"
+          "username": "[%key:common::config_flow::data::username%]",
+          "password": "[%key:common::config_flow::data::password%]"
         }
       },
       "reconfigure": {
         "title": "Reconfigure My Gas",
         "data": {
-          "username": "Username",
-          "password": "Password"
+          "username": "[%key:common::config_flow::data::username%]",
+          "password": "[%key:common::config_flow::data::password%]"
         }
       },
       "reauth_confirm": {
         "title": "Re-authenticate My Gas",
         "description": "Re-authenticate with account {username}",
         "data": {
-          "password": "Password"
+          "password": "[%key:common::config_flow::data::password%]"
         }
       }
     },
     "error": {
-      "cannot_connect": "Failed to connect",
-      "invalid_auth": "Invalid authentication",
-      "unknown": "Unexpected error",
+      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+      "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
+      "unknown": "[%key:common::config_flow::error::unknown%]",
       "no_devices": "No devices found in account"
     },
     "abort": {
-      "already_configured": "Account is already configured",
-      "reconfigure_successful": "Re-configuration was successful",
+      "already_configured": "[%key:common::config_flow::abort::already_configured_account%]",
+      "reconfigure_successful": "[%key:common::config_flow::abort::reconfigure_successful%]",
       "unique_id_mismatch": "Please ensure you reconfigure against the same account.",
-      "reauth_successful": "Re-authentication was successful"
+      "reauth_successful": "[%key:common::config_flow::abort::reauth_successful%]"
     }
   },
   "entity": {
@@ -161,12 +161,12 @@
       "description": "Send readings to My Gas",
       "fields": {
         "device_id": {
-          "name": "Device",
-          "description": "Select My Gas metering device"
+          "name": "Meter device",
+          "description": "Select My Gas meter device (counter)"
         },
         "value": {
           "name": "Readings",
-          "description": "Meter readings, m³"
+          "description": "Meter readings, m\u00b3"
         }
       }
     }

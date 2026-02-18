@@ -8,6 +8,20 @@
           "password": "Пароль",
           "username": "Логин"
         }
+      },
+      "reconfigure": {
+        "title": "Перенастройка Мой Газ",
+        "data": {
+          "password": "Пароль",
+          "username": "Логин"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Повторная аутентификация Мой Газ",
+        "description": "Повторная аутентификация для аккаунта {username}",
+        "data": {
+          "password": "Пароль"
+        }
       }
     },
     "error": {
@@ -30,6 +44,57 @@
       },
       "balance": {
         "name": "Задолженность"
+      },
+      "charged": {
+        "name": "Начислено"
+      },
+      "paid": {
+        "name": "Оплачено"
+      },
+      "debt": {
+        "name": "Задолженность за период"
+      },
+      "balance_period": {
+        "name": "Расчетный период"
+      },
+      "balance_date": {
+        "name": "Дата расчетного периода"
+      },
+      "balance_start": {
+        "name": "Сальдо на начало"
+      },
+      "balance_end": {
+        "name": "Сальдо на конец"
+      },
+      "charged_volume": {
+        "name": "Начисленный объем"
+      },
+      "circulation": {
+        "name": "Оборот"
+      },
+      "forgiven_debt": {
+        "name": "Списанная задолженность"
+      },
+      "planned": {
+        "name": "Плановая сумма"
+      },
+      "privilege": {
+        "name": "Льготы"
+      },
+      "privilege_volume": {
+        "name": "Льготы (объем)"
+      },
+      "restored_debt": {
+        "name": "Восстановленная задолженность"
+      },
+      "payment_adjustments": {
+        "name": "Корректировки платежей"
+      },
+      "end_balance_apgp": {
+        "name": "Сальдо АПГП"
+      },
+      "prepayment_charged": {
+        "name": "Накопленные авансовые начисления"
       },
       "current_timestamp": {
         "name": "Последнее обновление"

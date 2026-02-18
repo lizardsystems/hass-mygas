@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any
 
-from aiomygas.const import APP_VERSION, MOBILE_APP_NAME
+import aiomygas
 
 from homeassistant.components.sensor import SensorEntityDescription
 from homeassistant.const import ATTR_MODEL, ATTR_NAME
@@ -16,6 +16,7 @@ from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
+    ACCOUNT_MODEL,
     ATTR_SERIAL_NUM,
     ATTR_UUID,
     ATTRIBUTION,
@@ -24,43 +25,79 @@ from .const import (
     MANUFACTURER,
 )
 from .coordinator import MyGasCoordinator
-from .helpers import _to_date, _to_int, _to_str, make_device_id
+from .helpers import _to_date, _to_int, _to_str, make_account_device_id, make_device_id
 
 
-@dataclass(frozen=True, kw_only=True)
-class MyGasEntityDescriptionMixin:
-    """Mixin for required MyGas base description keys."""
-
-    value_fn: Callable[[MyGasBaseCoordinatorEntity], StateType | datetime | date]
-
-
-@dataclass(frozen=True, kw_only=True)
-class MyGasBaseSensorEntityDescription(SensorEntityDescription):
-    """Describes MyGas sensor entity default overrides."""
-
-    attr_fn: Callable[
-        [MyGasBaseCoordinatorEntity], dict[str, StateType | datetime | date]
-    ] = lambda _: {}
-    avabl_fn: Callable[[MyGasBaseCoordinatorEntity], bool] = lambda _: True
-    icon_fn: Callable[[MyGasBaseCoordinatorEntity], str | None] = lambda _: None
-
-
-@dataclass(frozen=True, kw_only=True)
-class MyGasSensorEntityDescription(
-    MyGasBaseSensorEntityDescription, MyGasEntityDescriptionMixin
-):
-    """Describes MyGas sensor entity."""
-
-
-class MyGasBaseCoordinatorEntity(CoordinatorEntity[MyGasCoordinator]):
-    """MyGas Base Entity."""
+class MyGasCoordinatorEntity(CoordinatorEntity[MyGasCoordinator]):
+    """Common base for all MyGas entities."""
 
     coordinator: MyGasCoordinator
     _attr_attribution = ATTRIBUTION
     _attr_has_entity_name = True
-    account_id: int
-    counter_id: int
-    lspu_account_id: int
+
+    def __init__(
+        self,
+        coordinator: MyGasCoordinator,
+        account_id: int,
+        lspu_account_id: int,
+    ) -> None:
+        """Initialize the Entity."""
+        super().__init__(coordinator)
+        self.account_id = account_id
+        self.lspu_account_id = lspu_account_id
+
+    def get_lspu_account_data(self) -> dict[str | int, Any]:
+        """Get LSPU account data."""
+        return self.coordinator.get_lspu_accounts(self.account_id)[self.lspu_account_id]
+
+
+@dataclass(frozen=True, kw_only=True)
+class MyGasSensorEntityDescription(SensorEntityDescription):
+    """Describes MyGas sensor entity."""
+
+    value_fn: Callable[[MyGasCoordinatorEntity], StateType | datetime | date]
+    attr_fn: Callable[
+        [MyGasCoordinatorEntity], dict[str, StateType | datetime | date]
+    ] = lambda _: {}
+    avabl_fn: Callable[[MyGasCoordinatorEntity], bool] = lambda _: True
+
+
+class MyGasAccountCoordinatorEntity(MyGasCoordinatorEntity):
+    """MyGas Account-level Entity (no counter)."""
+
+    def __init__(
+        self,
+        coordinator: MyGasCoordinator,
+        account_id: int,
+        lspu_account_id: int,
+    ) -> None:
+        """Initialize the Entity."""
+        super().__init__(coordinator, account_id, lspu_account_id)
+
+        account_number = coordinator.get_account_number(
+            self.account_id, self.lspu_account_id
+        )
+        account_alias = coordinator.get_account_alias(
+            self.account_id, self.lspu_account_id
+        )
+
+        if account_alias:
+            device_name = f"ЛС {account_number} ({account_alias})"
+        else:
+            device_name = f"ЛС {account_number}"
+
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, make_account_device_id(account_number))},
+            manufacturer=MANUFACTURER,
+            model=ACCOUNT_MODEL,
+            name=device_name,
+            sw_version=aiomygas.__version__,
+            configuration_url=CONFIGURATION_URL,
+        )
+
+
+class MyGasBaseCoordinatorEntity(MyGasCoordinatorEntity):
+    """MyGas Counter-level Entity."""
 
     def __init__(
         self,
@@ -70,19 +107,18 @@ class MyGasBaseCoordinatorEntity(CoordinatorEntity[MyGasCoordinator]):
         counter_id: int,
     ) -> None:
         """Initialize the Entity."""
-        super().__init__(coordinator)
-        self.account_id = account_id
-        self.lspu_account_id = lspu_account_id
+        super().__init__(coordinator, account_id, lspu_account_id)
         self.counter_id = counter_id
 
         counter = coordinator.get_counters(self.account_id, self.lspu_account_id)[
             counter_id
         ]
 
-        device_id = make_device_id(
-            coordinator.get_account_number(self.account_id, self.lspu_account_id),
-            counter[ATTR_UUID],
+        account_number = coordinator.get_account_number(
+            self.account_id, self.lspu_account_id
         )
+
+        device_id = make_device_id(account_number, counter[ATTR_UUID])
 
         account_alias = coordinator.get_account_alias(
             self.account_id, self.lspu_account_id
@@ -94,17 +130,14 @@ class MyGasBaseCoordinatorEntity(CoordinatorEntity[MyGasCoordinator]):
 
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, device_id)},
+            via_device=(DOMAIN, make_account_device_id(account_number)),
             manufacturer=MANUFACTURER,
             model=counter[ATTR_MODEL],
             name=device_name,
             serial_number=counter[ATTR_SERIAL_NUM],
-            sw_version=APP_VERSION[MOBILE_APP_NAME],
+            sw_version=aiomygas.__version__,
             configuration_url=CONFIGURATION_URL,
         )
-
-    def get_lspu_account_data(self) -> dict[str | int, Any]:
-        """Get LSPU account data."""
-        return self.coordinator.get_lspu_accounts(self.account_id)[self.lspu_account_id]
 
     def get_counter_data(self) -> dict[str, Any]:
         """Get counter data."""
@@ -120,7 +153,7 @@ class MyGasBaseCoordinatorEntity(CoordinatorEntity[MyGasCoordinator]):
         values = counter.get("values", [])
         return values[0] if values else {}
 
-    def get_counter_attr(self):
+    def get_counter_attr(self) -> dict[str, Any]:
         """Get counter attr."""
         counter = self.coordinator.get_counters(self.account_id, self.lspu_account_id)[
             self.counter_id

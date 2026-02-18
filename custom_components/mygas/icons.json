@@ -7,6 +7,57 @@
       "balance": {
         "default": "mdi:cash"
       },
+      "charged": {
+        "default": "mdi:cash-plus"
+      },
+      "paid": {
+        "default": "mdi:cash-check"
+      },
+      "debt": {
+        "default": "mdi:cash-minus"
+      },
+      "balance_period": {
+        "default": "mdi:calendar-text"
+      },
+      "balance_date": {
+        "default": "mdi:calendar"
+      },
+      "balance_start": {
+        "default": "mdi:cash"
+      },
+      "balance_end": {
+        "default": "mdi:cash"
+      },
+      "charged_volume": {
+        "default": "mdi:gas-burner"
+      },
+      "circulation": {
+        "default": "mdi:cash-sync"
+      },
+      "forgiven_debt": {
+        "default": "mdi:cash-remove"
+      },
+      "planned": {
+        "default": "mdi:cash-clock"
+      },
+      "privilege": {
+        "default": "mdi:cash-fast"
+      },
+      "privilege_volume": {
+        "default": "mdi:gas-burner"
+      },
+      "restored_debt": {
+        "default": "mdi:cash-refund"
+      },
+      "payment_adjustments": {
+        "default": "mdi:cash-edit"
+      },
+      "end_balance_apgp": {
+        "default": "mdi:cash"
+      },
+      "prepayment_charged": {
+        "default": "mdi:cash-lock"
+      },
       "current_timestamp": {
         "default": "mdi:update"
       },

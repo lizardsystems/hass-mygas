@@ -9,6 +9,7 @@ from math import ceil
 from typing import Any
 from urllib.parse import unquote
 
+from aiomygas.exceptions import MyGasApiError, MyGasAuthError
 import voluptuous as vol
 
 from homeassistant.const import ATTR_DATE, ATTR_DEVICE_ID, CONF_ERROR, CONF_URL
@@ -179,7 +180,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 "Service call '%s' successfully finished", service_call.service
             )
 
-        except Exception as exc:
+        except (HomeAssistantError, MyGasApiError, MyGasAuthError) as exc:
             _LOGGER.error(
                 "Service call '%s' failed. Error: %s", service_call.service, exc
             )
@@ -202,13 +203,3 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         hass.services.async_register(
             DOMAIN, service.name, _async_handle_service, service.schema
         )
-
-
-async def async_unload_services(hass: HomeAssistant) -> None:
-    """Unload MyGas services."""
-
-    if hass.data.get(DOMAIN):
-        return
-
-    for service in SERVICES:
-        hass.services.async_remove(domain=DOMAIN, service=service)

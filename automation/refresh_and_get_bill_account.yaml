@@ -1,0 +1,18 @@
+alias: "Мой Газ: Обновить данные и запросить счет для аккаунта"
+description: "Обновление данных и запрос счета для устройства аккаунта"
+triggers:
+  - at: "03:00:00"
+    trigger: time
+conditions:
+  - condition: template
+    value_template: "{{ now().day == 5 }}"
+actions:
+  - action: mygas.refresh
+    data:
+      device_id: <YOUR_DEVICE_ID>
+  - delay:
+      minutes: 1
+  - action: mygas.get_bill
+    data:
+      device_id: <YOUR_DEVICE_ID>
+mode: single

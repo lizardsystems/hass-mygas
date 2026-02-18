@@ -104,16 +104,28 @@ class MyGasConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None):
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         """Handle reconfiguration of an existing MyGas config entry."""
         errors: dict[str, str] = {}
         if user_input is not None:
             await self.async_set_unique_id(f"{user_input[CONF_USERNAME].lower()}")
             self._abort_if_unique_id_mismatch()
-            return self.async_update_reload_and_abort(
-                self._get_reconfigure_entry(),
-                data_updates=user_input,
-            )
+            try:
+                await validate_input(self.hass, user_input)
+            except CannotConnect:
+                errors["base"] = "cannot_connect"
+            except InvalidAuth:
+                errors["base"] = "invalid_auth"
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception("Unexpected exception")
+                errors["base"] = "unknown"
+            else:
+                return self.async_update_reload_and_abort(
+                    self._get_reconfigure_entry(),
+                    data_updates=user_input,
+                )
         reconf_entry = self._get_reconfigure_entry()
 
         return self.async_show_form(
@@ -141,9 +153,9 @@ class MyGasConfigFlow(ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Confirm re-authentication with MyGas."""
+        reauth_entry = self._get_reauth_entry()
         errors: dict[str, str] = {}
         if user_input is not None:
-            reauth_entry = self._get_reauth_entry()
             user_input = {**reauth_entry.data, **user_input}
             try:
                 await validate_input(self.hass, user_input)

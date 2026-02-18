@@ -4,8 +4,6 @@
 
 Этот репозиторий содержит настраиваемый компонент для Home Assistant для отображения данных из сервиса Мой Газ Смородина.
 
-**Важно!** Данная интеграция не поддерживает аккаунты пользователей, у которых нет подключенных приборов учета газа (счетчиков).
-
 # Установка
 
 **Способ 1.** [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=lizardsystems&repository=hass-mygas&category=integration)
@@ -50,7 +48,27 @@
 
 ![Установка mygas 6](images/setup-06.png)
 
-Устройством будет каждый счетчик (прибора учета) в аккаунте. Объекты (сенсоры) для каждого лицевого счета
+## Иерархия устройств
+
+Для каждого лицевого счета создается **устройство аккаунта** (ЛС). Если в аккаунте есть приборы учета газа, для каждого из них создается **устройство счетчика**, которое отображается как дочернее устройство аккаунта.
+
+```
+Устройство аккаунта: ЛС 1234567890 (Офис)
+├── Сенсоры: Лицевой счет, Задолженность, Начислено, Оплачено, Задолженность за период,
+│            Последнее обновление (+ 13 дополнительных, отключены по умолчанию)
+├── Кнопки: Обновить, Получить счет
+├── Устройство счетчика: BK-G6(T) Krom Schloder, № 05364805 (Офис)
+│   ├── Сенсоры: все сенсоры аккаунта + Счетчик, Средний расход, Цена, Показания и др.
+│   └── Кнопки: Обновить, Получить счет
+└── Устройство счетчика 2 ...
+```
+
+Если в аккаунте нет счетчиков, создается только устройство аккаунта с сенсорами и кнопками.
+
+### Именование устройств
+
+- **Устройство аккаунта** — `ЛС {номер_лс} ({алиас})`, например: `ЛС 1234567890 (Офис)`. Если алиас не задан: `ЛС 1234567890`.
+- **Устройство счетчика** — `{название_счетчика} ({алиас})`, например: `BK-G6(T) Krom Schloder, № 05364805 (Офис)`. Если алиас не задан, отображается только название счетчика.
 
 Общий вид устройства в Home Assistant.
 
@@ -62,16 +80,45 @@
 
 ![Сенсоры mygas 2](images/sensors-02.png)
 
-Создаются следующие объекты для каждого прибора учета:
- - `Лицевой счет`
- - `Задолженность`
- - `Последнее обновление`
- - `Счетчик`
- - `Средний расход`
- - `Цена за м³`
- - `Дата показаний`
- - `Показания`
- - `Потребление`
+## Сенсоры устройства аккаунта
+
+Для каждого лицевого счета создаются следующие сенсоры:
+
+### Включены по умолчанию
+ - `Лицевой счет` — номер лицевого счета
+ - `Задолженность` — общая задолженность
+ - `Начислено` — начислено за расчетный период
+ - `Оплачено` — оплачено за расчетный период
+ - `Задолженность за период` — задолженность за расчетный период
+ - `Последнее обновление` — время последнего обновления данных
+
+### Отключены по умолчанию
+
+Дополнительные сенсоры расчетного периода можно включить в настройках объекта:
+ - `Расчетный период` — название расчетного периода (например, «Январь 2026»)
+ - `Дата расчетного периода` — дата расчетного периода
+ - `Сальдо на начало` — сальдо на начало периода
+ - `Сальдо на конец` — сальдо на конец периода
+ - `Начисленный объем` — начисленный объем газа, м³
+ - `Оборот` — оборот за период
+ - `Списанная задолженность` — списанная задолженность
+ - `Плановая сумма` — плановая сумма
+ - `Льготы` — сумма льгот
+ - `Льготы (объем)` — льготный объем газа, м³
+ - `Восстановленная задолженность` — восстановленная задолженность
+ - `Корректировки платежей` — корректировки платежей
+ - `Сальдо АПГП` — сальдо АПГП на конец периода
+ - `Накопленные авансовые начисления` — накопленные авансовые начисления
+
+## Сенсоры устройства счетчика
+
+Для каждого прибора учета создаются все сенсоры аккаунта (см. выше), а также дополнительные сенсоры счетчика:
+ - `Счетчик` — название прибора учета
+ - `Средний расход` — среднемесячный расход газа, м³
+ - `Цена за м³` — тариф за кубометр газа
+ - `Дата показаний` — дата последней передачи показаний
+ - `Показания` — текущие показания счетчика, м³
+ - `Потребление` — потребление за последний период, м³
 
 Сенсор `Лицевой счет` имеет дополнительные атрибуты:
  - Площадь жилая
@@ -97,11 +144,13 @@
  - Плановая дата ТО
  - Дата установки пломбы
  - Дата заводской пломбы
- - Дата изготовления прибора 
+ - Дата изготовления прибора
 
 ![Сенсоры mygas 4](images/sensors-04.png)
 
 ## Кнопки
+
+Кнопки создаются как на устройстве аккаунта, так и на каждом устройстве счетчика:
 
 - **Обновить** - кнопка для немедленного обновления информации
     - Вызывает сервис `mygas.refresh`, сервис обновления информации
@@ -128,30 +177,30 @@
 
 Параметры:
 
-- **device_id** - Устройство Прибор учета
+- **device_id** - Устройство (аккаунт или прибор учета)
 
 Вызов сервиса в формате yaml
 
 ```yaml
-service: mygas.refresh
+action: mygas.refresh
 data:
-  device_id: 326995f8d0468225a1370b42297380c1
+  device_id: <YOUR_DEVICE_ID>
 ```
 
-Можно сделать вызов сервиса с использованием имени устройства
+Можно сделать вызов сервиса с использованием имени устройства аккаунта
 
 ```yaml
-service: mygas.get_bill
+action: mygas.refresh
 data:
-  device_id: '{{device_id("ВК-G6(Т) Krom Schloder, № 0XXXXXXX (000XXXXXX) (Офис)")}}'
+  device_id: '{{device_id("ЛС 1234567890 (Офис)")}}'
 ```
 
-или с использованием одного из сенсоров этого устройства
+или с использованием имени устройства счетчика
 
 ```yaml
-service: mygas.get_bill
+action: mygas.refresh
 data:
-  device_id: '{{device_id("sensor.mygas_XXXXXXXXXXXX_counter_XXXXXXXX_XXXX_XXXX_XXXX_XXXXXXXXXXXX_account")}}'
+  device_id: '{{device_id("BK-G6(T) Krom Schloder, № 05364805 (Офис)")}}'
 ```
 
 После завершения выполнения сервиса генерируется событие **mygas_refresh_completed**,
@@ -166,34 +215,34 @@ data:
 
 Параметры:
 
-- **device_id** - Устройство Прибор учета
-- **date** - Дата, на которую запрашивается счет, по умолчанию - первый день прошлого месяца. 
-- **email** - электронная почта на которую будет отправлен счет, опционально 
+- **device_id** - Устройство (аккаунт или прибор учета)
+- **date** - Дата, на которую запрашивается счет, по умолчанию - первый день прошлого месяца.
+- **email** - электронная почта на которую будет отправлен счет, опционально
 
 Вызов сервиса в формате yaml
 
 ```yaml
-service: mygas.get_bill
+action: mygas.get_bill
 data:
-  device_id: 326995f8d0468225a1370b42297380c1
+  device_id: <YOUR_DEVICE_ID>
 ```
-или с указанием емейл
+или с указанием email
 
 ```yaml
-service: mygas.get_bill
+action: mygas.get_bill
 data:
-  device_id: 326995f8d0468225a1370b42297380c1
-  email: test@mail.ru
+  device_id: <YOUR_DEVICE_ID>
+  email: your_email@mail.ru
 ```
 **Если была указана электронная почта, то запрошенный счет придет только на электронную почту**
 
 или с указанием даты
 
 ```yaml
-service: mygas.get_bill
+action: mygas.get_bill
 data:
-  device_id: 326995f8d0468225a1370b42297380c1
-  date: 2024-01-01
+  device_id: <YOUR_DEVICE_ID>
+  date: 2026-01-01
 ```
 Вызов сервиса с указанием даты счета позволяет получить счет за указанный месяц.
 В этом случае необходимо указать первый день месяца, за который требуется получить счет.
@@ -207,21 +256,22 @@ data:
 
 ![Сервисы](images/services-04.png)
 
-Сервис отправляет показания в ТНС Энерго из указанных сенсоров.
+Сервис отправляет показания в Мой Газ из указанных сенсоров.
+
+> **Важно:** Сервис `send_readings` принимает только устройство **счетчика**, а не аккаунта.
 
 Параметры:
 
-- **device_id** - Устройство Лицевой счет
-- **value** - Сенсор со значением потребления
+- **device_id** - Устройство прибора учета (счетчик)
+- **value** - Сенсор со значением показаний
 
 Вызов сервиса в формате yaml
 
 ```yaml
-service: mygas.send_readings
+action: mygas.send_readings
 data:
-  device_id: 326995f8d0468225a1370b42297380c1
-  value: sensor.mygas_XXXXXXXXXXXX_counter_XXXXXXXX_XXXX_XXXX_XXXX_XXXXXXXXXXXX_readings
-
+  device_id: <YOUR_DEVICE_ID>
+  value: <YOUR_READINGS_SENSOR>
 ```
 
 После завершения выполнения сервиса генерируется событие **mygas_send_readings_completed**,
@@ -246,13 +296,13 @@ data:
 ```yaml
 event_type: mygas_refresh_completed
 data:
-  device_id: a05df6bea0854e17027c36a906722560
+  device_id: <YOUR_DEVICE_ID>
 origin: LOCAL
-time_fired: "2024-02-25T16:27:46.332645+00:00"
+time_fired: "2026-02-25T16:27:46.332645+00:00"
 context:
-  id: 01HQGHG1ST4GVCR3FPJVCVTA6X
+  id: <CONTEXT_ID>
   parent_id: null
-  user_id: 86cc507484e845f7b03f46eeaaab0fa7
+  user_id: <YOUR_USER_ID>
 
 
 ```
@@ -264,16 +314,16 @@ context:
 ```yaml
 event_type: mygas_get_bill_completed
 data:
-  device_id: a05df6bea0854e17027c36a906722560
-  date: "2024-01-01"
+  device_id: <YOUR_DEVICE_ID>
+  date: "2026-01-01"
   url: >-
-    https://xn--80asg7a0b.xn--80ahmohdapg.xn--80asehdb/prodcontainerone/xxxxxxxxxxxxx.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minio_service_user/xxxxxxxx/us-east-1/s3/aws4_request&X-Amz-Date=20240225T162907Z&X-Amz-Expires=600&X-Amz-SignedHeaders=host&X-Amz-Signature=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    https://example.com/receipt.pdf?signature=xxx
 origin: LOCAL
-time_fired: "2024-02-25T16:29:07.414544+00:00"
+time_fired: "2026-02-25T16:29:07.414544+00:00"
 context:
-  id: 01HQGHJHNGX3GNRNBQDBR7AXRX
+  id: <CONTEXT_ID>
   parent_id: null
-  user_id: 86cc507484e845f7b03f46eeaaab0fa7
+  user_id: <YOUR_USER_ID>
 
 
 ```
@@ -284,15 +334,15 @@ context:
 ```yaml
 event_type: mygas_get_bill_completed
 data:
-  device_id: a05df6bea0854e17027c36a906722560
-  date: "2024-01-01"
+  device_id: <YOUR_DEVICE_ID>
+  date: "2026-01-01"
   email: your_email@mail.ru 
 origin: LOCAL
-time_fired: "2024-02-25T16:29:07.414544+00:00"
+time_fired: "2026-02-25T16:29:07.414544+00:00"
 context:
-  id: 01HQGHJHNGX3GNRNBQDBR7AXRX
+  id: <CONTEXT_ID>
   parent_id: null
-  user_id: 86cc507484e845f7b03f46eeaaab0fa7
+  user_id: <YOUR_USER_ID>
 
 
 ```
@@ -305,16 +355,16 @@ context:
 ```yaml
 event_type: mygas_send_readings_completed
 data:
-  device_id: a05df6bea0854e17027c36a906722560
+  device_id: <YOUR_DEVICE_ID>
   readings: 1806
   sent: true
   message: Показания счетчика успешно переданы
 origin: LOCAL
-time_fired: "2024-02-25T16:32:02.808445+00:00"
+time_fired: "2026-02-25T16:32:02.808445+00:00"
 context:
-  id: 01HQGHQW60NNNTZD4GTSN21A8G
+  id: <CONTEXT_ID>
   parent_id: null
-  user_id: 86cc507484e845f7b03f46eeaaab0fa7
+  user_id: <YOUR_USER_ID>
 ```
 
 ## Событие: mygas_*_failed - Запрос к сервису выполнился с ошибкой
@@ -330,14 +380,14 @@ context:
 ```yaml
 event_type: mygas_refresh_failed
 data:
-  device_id: 326995f8d0468225a1370b42297380c1
+  device_id: <YOUR_DEVICE_ID>
   error: "Error description"
 origin: LOCAL
-time_fired: "2024-02-21T17:18:09.428522+00:00"
+time_fired: "2026-02-21T17:18:09.428522+00:00"
 context:
-  id: 01GYJD548GAG83ZEDVGVCF1WKR
+  id: <CONTEXT_ID>
   parent_id: null
-  user_id: 386a6cba68ca41a0923d3b94b2710bdc
+  user_id: <YOUR_USER_ID>
 ```
 
 # Автоматизации
@@ -373,18 +423,15 @@ conditions:
     value_template: "{{ now().day == 24 }}"
 actions:
   - alias: "Мой Газ: Отправить показания"
-    data:
-      value: sensor.gaz_dom_pokazaniia
-      device_id: 70e3a0546d0bdd5a8786bfb595def7db
     action: mygas.send_readings
+    data:
+      value: <YOUR_READINGS_SENSOR>
+      device_id: <YOUR_DEVICE_ID>
   - delay:
-      hours: 0
-      minutes: 1
-      seconds: 0
-      milliseconds: 0
-  - data:
-      device_id: 70e3a0546d0bdd5a8786bfb595def7db
-    action: mygas.refresh 
+      minutes: 10
+  - action: mygas.refresh
+    data:
+      device_id: <YOUR_DEVICE_ID>
 mode: single
 ```
 Вы можете указать свою дату для этого скорректируйте строку `"{{ now().day == 24 }}"`, 
@@ -400,22 +447,55 @@ mode: single
 Автоматизация в формате yaml
 
 ```yaml
-alias: Запросить счета за газ
-description: ""
-trigger:
-  - platform: time
-    at: "02:00:00"
-condition:
+alias: "Мой Газ: Запросить счета за газ"
+description: Запрос счета за газ по расписанию
+triggers:
+  - at: "02:00:00"
+    trigger: time
+conditions:
   - condition: template
     value_template: "{{ now().day == 5 }}"
-action:
-  - service: mygas.get_bill
+actions:
+  - action: mygas.get_bill
     data:
-      device_id: 326995f8d0468225a1370b42297380c1
+      device_id: <YOUR_DEVICE_ID>
 mode: single
 ```
-Вы можете указать свою дату для этого скорректируйте строку `"{{ now().day == 5 }}"`, 
-а также можно изменить время для этого в строке `at: "01:00:00"` укажите нужное время.
+Вы можете указать свою дату для этого скорректируйте строку `"{{ now().day == 5 }}"`,
+а также можно изменить время для этого в строке `at: "02:00:00"` укажите нужное время.
+
+### Обновление и получение счета для устройства аккаунта
+
+Сервисы `mygas.refresh` и `mygas.get_bill` можно вызывать как для устройства счетчика, так и для устройства аккаунта.
+Это удобно для аккаунтов без приборов учета.
+
+Обновление данных аккаунта и запрос счета будут выполняться 5 числа каждого месяца в 3 часа ночи.
+
+```yaml
+alias: "Мой Газ: Обновить данные и запросить счет для аккаунта"
+description: Обновление данных и запрос счета для устройства аккаунта
+triggers:
+  - at: "03:00:00"
+    trigger: time
+conditions:
+  - condition: template
+    value_template: "{{ now().day == 5 }}"
+actions:
+  - action: mygas.refresh
+    data:
+      device_id: <YOUR_DEVICE_ID>
+  - delay:
+      minutes: 1
+  - action: mygas.get_bill
+    data:
+      device_id: <YOUR_DEVICE_ID>
+mode: single
+```
+
+> Замените `<YOUR_DEVICE_ID>` на ID вашего устройства аккаунта. Получить его можно с помощью шаблона:
+> `{{device_id("ЛС 1234567890 (Офис)")}}`
+
+> **Важно:** Сервис `mygas.send_readings` требует устройство **счетчика** и не может быть вызван для устройства аккаунта.
 
 ## Уведомления
 
@@ -471,7 +551,7 @@ mode: single
 Автоматизация в формате yaml
 
 ```yaml
-lias: "Мой Газ: Уведомление о счете за газ"
+alias: "Мой Газ: Уведомление о счете за газ"
 description: Уведомление о счете за газ от сервиса Мой Газ
 triggers:
   - event_type: mygas_get_bill_completed
@@ -609,13 +689,13 @@ mode: single
 
 ```yaml
 sequence:
-  - service: mygas.get_bill
+  - action: mygas.get_bill
     data:
-      device_id: 326995f8d0468225a1370b42297380c1
+      device_id: <YOUR_DEVICE_ID>
       date: "{{ states('input_datetime.gas_bill_date') }}"
 ```
 
-> Замените `device_id` на ваш фактический ID устройства.
+> Замените `<YOUR_DEVICE_ID>` на ваш фактический ID устройства.
 
 
 ### Добавление в интерфейс Lovelace
@@ -663,9 +743,9 @@ cards:
 
 ```yaml
 sequence:
-  - service: mygas.get_bill
+  - action: mygas.get_bill
     data:
-      device_id: 67f641f60d6e5670a54271e4c71aa051
+      device_id: <YOUR_DEVICE_ID>
       date: "{{ now().date() }}"
 ```
 

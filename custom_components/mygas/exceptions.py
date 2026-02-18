@@ -10,7 +10,3 @@ class CannotConnect(HomeAssistantError):
 
 class InvalidAuth(HomeAssistantError):
     """Error to indicate there is invalid auth."""
-
-
-class NoDevicesError(HomeAssistantError):
-    """Error to indicate there are no devices in account."""

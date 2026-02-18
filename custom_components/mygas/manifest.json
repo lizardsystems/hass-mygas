@@ -6,7 +6,6 @@
   ],
   "after_dependencies": ["http"],
   "config_flow": true,
-  "dependencies": [],
   "documentation": "https://github.com/lizardsystems/hass-mygas",
   "integration_type": "hub",
   "iot_class": "cloud_polling",
@@ -16,9 +15,7 @@
     "mygas"
   ],
   "requirements": [
-    "aiomygas==2.3.0"
+    "aiomygas==2.4"
   ],
-  "ssdp": [],
-  "version": "1.6.1",
-  "zeroconf": []
+  "version": "2.0.0"
 }

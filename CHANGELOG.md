@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-02-18
+
+### Added
+
+ - Добавлены устройства уровня аккаунта (ЛС) — создаются всегда, даже если нет счетчиков ([#14](https://github.com/lizardsystems/hass-mygas/issues/14), [#17](https://github.com/lizardsystems/hass-mygas/issues/17)).
+ - Сенсоры аккаунта: баланс, номер лицевого счета, дата последнего обновления.
+ - Кнопки аккаунта: обновление данных, запрос счета.
+ - Устройства счетчиков привязаны к устройству аккаунта через `via_device`.
+ - Добавлены сенсоры расчетного периода: начислено, оплачено, задолженность за период (включены по умолчанию), а также 14 дополнительных сенсоров (отключены по умолчанию): расчетный период, дата периода, сальдо на начало/конец, начисленный объем, оборот, списанная задолженность, плановая сумма, льготы, льготный объем, восстановленная задолженность, корректировки платежей, сальдо АПГП, авансовые начисления.
+ - Устройства аккаунтов получили информативные имена: `ЛС {номер} ({алиас})`.
+ - Добавлен модуль диагностики (`diagnostics.py`).
+ - Добавлен файл `strings.json` для hassfest.
+ - Добавлены шаги `reconfigure` и `reauth_confirm` в переводы.
+ - Добавлены юнит-тесты (config flow, init, coordinator, устройства аккаунта, сенсоры расчетного периода).
+ - Добавлен CI workflow для запуска тестов.
+
+### Changed
+
+ - Миграция на `runtime_data` вместо `hass.data[DOMAIN]`.
+ - Выделен общий базовый класс `MyGasCoordinatorEntity` для сущностей аккаунта и счетчика.
+ - Извлечен хелпер `make_entity_unique_id()` для генерации unique_id сущностей.
+ - Убран `update_listener` (options flow отсутствует).
+ - Упрощена выгрузка интеграции (`async_unload_entry`).
+ - Координатор использует внутренний `_LOGGER` и `config_entry=` в `super().__init__()`.
+ - Упрощены entity description классы (убран Mixin, один класс).
+ - Убраны hardcoded `name` и `icon` из entity descriptions (используются `translation_key` и `icons.json`).
+ - Убрана ручная генерация `entity_id` (`async_generate_entity_id`).
+ - `sw_version` в DeviceInfo заменён на `aiomygas.__version__`.
+ - Удалены неиспользуемые константы, хелперы и исключения.
+ - Сужен перехват исключений в `services.py`.
+ - Улучшена типизация: добавлены аннотации типов в координатор и entity descriptions.
+ - Рефакторинг `find_account_by_device_id()` — кэширование `get_counters()`, использование `enumerate()`.
+ - Обновлён `manifest.json`: убраны пустые массивы, обновлена версия.
+ - Обновлена зависимость `aiomygas` до версии 2.4.
+ - Обновлён `hassfest.yaml` на `actions/checkout@v4`.
+
+### Fixed
+
+ - Исправлена ошибка `is list` вместо `isinstance()` при обработке ответа LSPU API.
+ - Исправлена ошибка `NameError` при первом показе формы реавторизации.
+ - Добавлена валидация учетных данных при реконфигурации.
+ - Заменены `assert` на `HomeAssistantError` в координаторе (assert отключается в production).
+ - Исправлена обработка ошибок аутентификации — `ConfigEntryAuthFailed` больше не перехватывается как `UpdateFailed`.
+ - Исправлена опечатка `lspu_acount_id` → `lspu_account_id` в координаторе.
+ - Убрано устаревшее предупреждение в логах для аккаунтов без счетчиков.
+
 ## [1.6.1] - 2025-11-23
 
 ### Fixed

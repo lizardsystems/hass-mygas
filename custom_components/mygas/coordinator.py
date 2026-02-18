@@ -13,7 +13,7 @@ from aiomygas.exceptions import MyGasAuthError
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.debounce import Debouncer
@@ -40,34 +40,32 @@ from .const import (
     UPDATE_HOUR_END,
 )
 from .decorators import async_api_request_handler
-from .helpers import get_update_interval, make_device_id
+from .helpers import get_update_interval, make_account_device_id, make_device_id
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class MyGasCoordinator(DataUpdateCoordinator):
     """Coordinator is responsible for querying the device at a specified route."""
 
+    config_entry: ConfigEntry
     _api: MyGasApi
-    data: dict[str, Any]
-    username: str
-    password: str
-    force_next_update: bool
-    auto_update: bool
 
     def __init__(
         self,
         hass: HomeAssistant,
-        logger: logging.Logger,
         *,
         config_entry: ConfigEntry,
     ) -> None:
         """Initialise a custom coordinator."""
         super().__init__(
             hass,
-            logger,
+            _LOGGER,
             name=DOMAIN,
+            config_entry=config_entry,
             request_refresh_debouncer=Debouncer(
                 hass,
-                logger,
+                _LOGGER,
                 cooldown=REQUEST_REFRESH_DEFAULT_COOLDOWN,
                 immediate=False,
             ),
@@ -81,7 +79,7 @@ class MyGasCoordinator(DataUpdateCoordinator):
         auth = SimpleMyGasAuth(self.username, self.password, session)
         self._api = MyGasApi(auth)
 
-    async def async_force_refresh(self):
+    async def async_force_refresh(self) -> None:
         """Force refresh data."""
         self.force_next_update = True
         await self.async_refresh()
@@ -92,31 +90,31 @@ class MyGasCoordinator(DataUpdateCoordinator):
         new_data: dict[str, Any] = {
             ATTR_LAST_UPDATE_TIME: dt_util.now(),
         }
-        self.logger.debug("Start updating data...")
+        _LOGGER.debug("Start updating data...")
         try:
             accounts_info = _data.get(CONF_ACCOUNTS)
             if accounts_info is None or self.force_next_update:
                 # get account general information
-                self.logger.debug("Get accounts info for %s", self.username)
+                _LOGGER.debug("Get accounts info for %s", self.username)
                 accounts_info = await self._async_get_accounts()
                 if accounts_info:
-                    self.logger.debug(
+                    _LOGGER.debug(
                         "Accounts info for %s retrieved successfully", self.username
                     )
                 else:
-                    self.logger.warning(
+                    _LOGGER.warning(
                         "Accounts info for %s not retrieved", self.username
                     )
                     return new_data
             else:
-                self.logger.debug(
+                _LOGGER.debug(
                     "Accounts info for %s retrieved from cache", self.username
                 )
 
             new_data[CONF_ACCOUNTS] = accounts_info
 
             if accounts_info.get("elsGroup"):
-                self.logger.debug(
+                _LOGGER.debug(
                     "Accounts info for els accounts %s retrieved successfully",
                     self.username,
                 )
@@ -125,7 +123,7 @@ class MyGasCoordinator(DataUpdateCoordinator):
                     accounts_info
                 )
             elif accounts_info.get("lspu"):
-                self.logger.debug(
+                _LOGGER.debug(
                     "Accounts info for lspu accounts %s retrieved successfully",
                     self.username,
                 )
@@ -135,19 +133,19 @@ class MyGasCoordinator(DataUpdateCoordinator):
                     accounts_info
                 )
             else:
-                self.logger.warning(
+                _LOGGER.warning(
                     "Account %s does not have els or lspu in accounts info",
                     self.username,
                 )
                 return None
 
-        except MyGasAuthError as exc:
+        except (ConfigEntryAuthFailed, MyGasAuthError) as exc:
             raise ConfigEntryAuthFailed("Incorrect Login or Password") from exc
         except Exception as exc:  # pylint: disable=broad-except
             raise UpdateFailed(f"Error communicating with API: {exc}") from exc
         else:
-            self.logger.debug("Data updated successfully for %s", self.username)
-            self.logger.debug("%s", new_data)
+            _LOGGER.debug("Data updated successfully for %s", self.username)
+            _LOGGER.debug("%s", new_data)
 
             return new_data
         finally:
@@ -158,52 +156,56 @@ class MyGasCoordinator(DataUpdateCoordinator):
                     randrange(60),
                     randrange(60),
                 )
-                self.logger.debug(
+                _LOGGER.debug(
                     "Update interval: %s seconds", self.update_interval.total_seconds()
                 )
             else:
                 self.update_interval = None
 
-    async def retrieve_els_accounts_info(self, accounts_info):
+    async def retrieve_els_accounts_info(
+        self, accounts_info: dict[str, Any]
+    ) -> dict[int, Any]:
         """Retrieve ELS accounts info."""
         els_list = accounts_info.get("elsGroup")
         els_info = {}
         for els in els_list:
             els_id = els.get("els", {}).get("id")
             if not els_id:
-                self.logger.warning("id not found in els info")
+                _LOGGER.warning("id not found in els info")
                 continue
             els_id = int(els_id)
-            self.logger.debug("Get els info for %d", els_id)
+            _LOGGER.debug("Get els info for %d", els_id)
             els_item_info = await self._async_get_els_info(els_id)
             if els_item_info:
                 els_info[els_id] = els_item_info
-                self.logger.debug("Els info for id=%d retrieved successfully", els_id)
+                _LOGGER.debug("Els info for id=%d retrieved successfully", els_id)
             else:
-                self.logger.warning("Els info for id=%d not retrieved", els_id)
+                _LOGGER.warning("Els info for id=%d not retrieved", els_id)
         return els_info
 
-    async def retrieve_lspu_accounts_info(self, accounts_info):
+    async def retrieve_lspu_accounts_info(
+        self, accounts_info: dict[str, Any]
+    ) -> dict[int, Any]:
         """Retrieve LSPU accounts info."""
         lspu_list = accounts_info.get("lspu")
         lspu_info = {}
         for lspu in lspu_list:
             lspu_id = lspu.get("id")
             if not lspu_id:
-                self.logger.warning("id not found in lspu info")
+                _LOGGER.warning("id not found in lspu info")
                 continue
 
             lspu_id = int(lspu_id)
-            self.logger.debug("Get lspu info for %s", lspu_id)
+            _LOGGER.debug("Get lspu info for %s", lspu_id)
             lspu_item_info = await self._async_get_lspu_info(lspu_id)
             if lspu_item_info:
-                if lspu_item_info is list:
+                if isinstance(lspu_item_info, list):
                     lspu_info[lspu_id] = lspu_item_info
                 else:
                     lspu_info[lspu_id] = [lspu_item_info]
-                self.logger.debug("Lspu info for %s retrieved successfully", lspu_id)
+                _LOGGER.debug("Lspu info for %s retrieved successfully", lspu_id)
             else:
-                self.logger.warning("Lspu info for %s not retrieved", lspu_id)
+                _LOGGER.warning("Lspu info for %s not retrieved", lspu_id)
         return lspu_info
 
     def get_accounts(self) -> dict[int, dict[str | int, Any]]:
@@ -242,39 +244,37 @@ class MyGasCoordinator(DataUpdateCoordinator):
         return _lspu_accounts
 
     def get_counters(
-        self, account_id: int, lspu_acount_id: int
+        self, account_id: int, lspu_account_id: int
     ) -> list[dict[str, Any]]:
         """Get counter data."""
-        _accounts = self.get_lspu_accounts(account_id)[lspu_acount_id]
-        counters = _accounts.get(ATTR_COUNTERS, [])
-        if not counters:
-            self.logger.warning(
-                "No counters found for account_id=%d lspu_account_id=%d",
-                account_id,
-                lspu_acount_id,
-            )
-        return counters
+        _accounts = self.get_lspu_accounts(account_id)[lspu_account_id]
+        return _accounts.get(ATTR_COUNTERS, [])
 
     async def find_account_by_device_id(
         self, device_id: str
-    ) -> tuple[int | None, int | None, int | None] | None:
+    ) -> tuple[int | None, int | None, int | None]:
         """Find device by id."""
         device_registry = dr.async_get(self.hass)
         device = device_registry.async_get(device_id)
-        assert device
+        if not device:
+            raise HomeAssistantError(f"Device {device_id} not found")
 
         for account_id in self.get_accounts():
             for lspu_account_id in range(len(self.get_lspu_accounts(account_id))):
-                for counter_id in range(
-                    len(self.get_counters(account_id, lspu_account_id))
-                ):
-                    _account_number = self.get_account_number(
-                        account_id, lspu_account_id
-                    )
-                    _counter_uuid = self.get_counters(account_id, lspu_account_id)[
-                        counter_id
-                    ].get(ATTR_UUID)
-                    assert _counter_uuid
+                _account_number = self.get_account_number(
+                    account_id, lspu_account_id
+                )
+                # Check account-level device
+                if device.identifiers == {
+                    (DOMAIN, make_account_device_id(_account_number))
+                }:
+                    return account_id, lspu_account_id, None
+                # Check counter-level device
+                counters = self.get_counters(account_id, lspu_account_id)
+                for counter_id, counter in enumerate(counters):
+                    _counter_uuid = counter.get(ATTR_UUID)
+                    if not _counter_uuid:
+                        continue
                     if device.identifiers == {
                         (DOMAIN, make_device_id(_account_number, _counter_uuid))
                     }:
@@ -346,9 +346,7 @@ class MyGasCoordinator(DataUpdateCoordinator):
         if bill_date is None:
             bill_date = date.today()
         date_iso_short = bill_date.strftime("%Y-%m-%d")
-        device = await self.find_account_by_device_id(device_id)
-        assert device
-        account_id, *_ = device
+        account_id, *_ = await self.find_account_by_device_id(device_id)
         if account_id is not None:
             is_els = self.is_els()
             return await self._async_get_receipt(
@@ -358,20 +356,27 @@ class MyGasCoordinator(DataUpdateCoordinator):
 
     async def async_send_readings(
         self,
-        device_id,
+        device_id: str,
         value: float,
     ) -> list[dict[str, Any]]:
         """Send readings with handle errors by decorator."""
-        device = await self.find_account_by_device_id(device_id)
-        assert device
-        account_id, lspu_account_id, counter_id = device
-        assert account_id is not None
-        assert counter_id is not None
-        assert lspu_account_id is not None
+        account_id, lspu_account_id, counter_id = (
+            await self.find_account_by_device_id(device_id)
+        )
+        if account_id is None or lspu_account_id is None or counter_id is None:
+            raise HomeAssistantError(
+                f"Account not found for device {device_id}"
+            )
         lspu_accounts = self.get_lspu_accounts(account_id)
-        assert lspu_accounts
+        if not lspu_accounts:
+            raise HomeAssistantError(
+                f"No LSPU accounts found for account {account_id}"
+            )
         lspu_account = lspu_accounts[lspu_account_id]
-        assert lspu_account
+        if not lspu_account:
+            raise HomeAssistantError(
+                f"LSPU account {lspu_account_id} not found"
+            )
         lspu_id = lspu_account[ATTR_ACCOUNT_ID]
 
         if self.is_els():
@@ -379,9 +384,15 @@ class MyGasCoordinator(DataUpdateCoordinator):
         else:
             els_id = None
         counters = self.get_counters(account_id, lspu_account_id)
-        assert counters
+        if not counters:
+            raise HomeAssistantError(
+                f"No counters found for account {account_id}"
+            )
         equipment_uuid = counters[counter_id][ATTR_UUID]
-        assert equipment_uuid
+        if not equipment_uuid:
+            raise HomeAssistantError(
+                f"Counter UUID not found for counter {counter_id}"
+            )
         return await self._async_send_readings(
             lspu_id,
             equipment_uuid,

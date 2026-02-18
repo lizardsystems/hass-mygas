@@ -3,29 +3,35 @@
 from __future__ import annotations
 
 from homeassistant.components.sensor import (
-    ENTITY_ID_FORMAT,
     SensorDeviceClass,
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_IDENTIFIERS, UnitOfVolume
+from homeassistant.const import UnitOfVolume
 from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity import EntityCategory, async_generate_entity_id
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.util import slugify
 
-from .const import ATTR_LAST_UPDATE_TIME, DOMAIN
+from . import MyGasConfigEntry
+from .const import ATTR_LAST_UPDATE_TIME
 from .coordinator import MyGasCoordinator
-from .entity import MyGasBaseCoordinatorEntity, MyGasSensorEntityDescription
-from .helpers import _to_date, _to_float, _to_str
+from .entity import (
+    MyGasAccountCoordinatorEntity,
+    MyGasBaseCoordinatorEntity,
+    MyGasSensorEntityDescription,
+)
+from .helpers import (
+    _to_date,
+    _to_float,
+    _to_str,
+    make_account_device_id,
+    make_device_id,
+    make_entity_unique_id,
+)
 
 SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
-    # Информация по счету
     MyGasSensorEntityDescription(
         key="account",
-        name="Лицевой счет",
-        icon="mdi:identifier",
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda device: _to_str(device.get_lspu_account_data().get("account")),
         avabl_fn=lambda device: "account" in device.get_lspu_account_data(),
@@ -37,7 +43,6 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
     ),
     MyGasSensorEntityDescription(
         key="balance",
-        name="Задолженность",
         device_class=SensorDeviceClass.MONETARY,
         native_unit_of_measurement="RUB",
         value_fn=lambda device: _to_float(
@@ -47,8 +52,193 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
         translation_key="balance",
     ),
     MyGasSensorEntityDescription(
+        key="charged",
+        device_class=SensorDeviceClass.MONETARY,
+        native_unit_of_measurement="RUB",
+        value_fn=lambda device: _to_float(
+            (device.get_lspu_account_data().get("balances") or [{}])[0].get("chargedSum")
+        ),
+        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        translation_key="charged",
+    ),
+    MyGasSensorEntityDescription(
+        key="paid",
+        device_class=SensorDeviceClass.MONETARY,
+        native_unit_of_measurement="RUB",
+        value_fn=lambda device: _to_float(
+            (device.get_lspu_account_data().get("balances") or [{}])[0].get("paidSum")
+        ),
+        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        translation_key="paid",
+    ),
+    MyGasSensorEntityDescription(
+        key="debt",
+        device_class=SensorDeviceClass.MONETARY,
+        native_unit_of_measurement="RUB",
+        value_fn=lambda device: _to_float(
+            (device.get_lspu_account_data().get("balances") or [{}])[0].get("debtSum")
+        ),
+        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        translation_key="debt",
+    ),
+    MyGasSensorEntityDescription(
+        key="balance_period",
+        value_fn=lambda device: _to_str(
+            (device.get_lspu_account_data().get("balances") or [{}])[0].get("name")
+        ),
+        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        translation_key="balance_period",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+    ),
+    MyGasSensorEntityDescription(
+        key="balance_date",
+        device_class=SensorDeviceClass.DATE,
+        value_fn=lambda device: _to_date(
+            (device.get_lspu_account_data().get("balances") or [{}])[0].get("date"),
+            "%Y-%m-%d",
+        ),
+        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        translation_key="balance_date",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+    ),
+    MyGasSensorEntityDescription(
+        key="balance_start",
+        device_class=SensorDeviceClass.MONETARY,
+        native_unit_of_measurement="RUB",
+        value_fn=lambda device: _to_float(
+            (device.get_lspu_account_data().get("balances") or [{}])[0].get("balanceStartSum")
+        ),
+        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        translation_key="balance_start",
+        entity_registry_enabled_default=False,
+    ),
+    MyGasSensorEntityDescription(
+        key="balance_end",
+        device_class=SensorDeviceClass.MONETARY,
+        native_unit_of_measurement="RUB",
+        value_fn=lambda device: _to_float(
+            (device.get_lspu_account_data().get("balances") or [{}])[0].get("balanceEndSum")
+        ),
+        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        translation_key="balance_end",
+        entity_registry_enabled_default=False,
+    ),
+    MyGasSensorEntityDescription(
+        key="charged_volume",
+        native_unit_of_measurement=UnitOfVolume.CUBIC_METERS,
+        suggested_display_precision=1,
+        device_class=SensorDeviceClass.GAS,
+        value_fn=lambda device: _to_float(
+            (device.get_lspu_account_data().get("balances") or [{}])[0].get("chargedVolume")
+        ),
+        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        translation_key="charged_volume",
+        entity_registry_enabled_default=False,
+    ),
+    MyGasSensorEntityDescription(
+        key="circulation",
+        device_class=SensorDeviceClass.MONETARY,
+        native_unit_of_measurement="RUB",
+        value_fn=lambda device: _to_float(
+            (device.get_lspu_account_data().get("balances") or [{}])[0].get("circulationSum")
+        ),
+        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        translation_key="circulation",
+        entity_registry_enabled_default=False,
+    ),
+    MyGasSensorEntityDescription(
+        key="forgiven_debt",
+        device_class=SensorDeviceClass.MONETARY,
+        native_unit_of_measurement="RUB",
+        value_fn=lambda device: _to_float(
+            (device.get_lspu_account_data().get("balances") or [{}])[0].get("forgivenDebt")
+        ),
+        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        translation_key="forgiven_debt",
+        entity_registry_enabled_default=False,
+    ),
+    MyGasSensorEntityDescription(
+        key="planned",
+        device_class=SensorDeviceClass.MONETARY,
+        native_unit_of_measurement="RUB",
+        value_fn=lambda device: _to_float(
+            (device.get_lspu_account_data().get("balances") or [{}])[0].get("plannedSum")
+        ),
+        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        translation_key="planned",
+        entity_registry_enabled_default=False,
+    ),
+    MyGasSensorEntityDescription(
+        key="privilege",
+        device_class=SensorDeviceClass.MONETARY,
+        native_unit_of_measurement="RUB",
+        value_fn=lambda device: _to_float(
+            (device.get_lspu_account_data().get("balances") or [{}])[0].get("privilegeSum")
+        ),
+        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        translation_key="privilege",
+        entity_registry_enabled_default=False,
+    ),
+    MyGasSensorEntityDescription(
+        key="privilege_volume",
+        native_unit_of_measurement=UnitOfVolume.CUBIC_METERS,
+        suggested_display_precision=1,
+        device_class=SensorDeviceClass.GAS,
+        value_fn=lambda device: _to_float(
+            (device.get_lspu_account_data().get("balances") or [{}])[0].get("privilegeVolume")
+        ),
+        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        translation_key="privilege_volume",
+        entity_registry_enabled_default=False,
+    ),
+    MyGasSensorEntityDescription(
+        key="restored_debt",
+        device_class=SensorDeviceClass.MONETARY,
+        native_unit_of_measurement="RUB",
+        value_fn=lambda device: _to_float(
+            (device.get_lspu_account_data().get("balances") or [{}])[0].get("restoredDebt")
+        ),
+        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        translation_key="restored_debt",
+        entity_registry_enabled_default=False,
+    ),
+    MyGasSensorEntityDescription(
+        key="payment_adjustments",
+        device_class=SensorDeviceClass.MONETARY,
+        native_unit_of_measurement="RUB",
+        value_fn=lambda device: _to_float(
+            (device.get_lspu_account_data().get("balances") or [{}])[0].get("paymentAdjustments")
+        ),
+        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        translation_key="payment_adjustments",
+        entity_registry_enabled_default=False,
+    ),
+    MyGasSensorEntityDescription(
+        key="end_balance_apgp",
+        device_class=SensorDeviceClass.MONETARY,
+        native_unit_of_measurement="RUB",
+        value_fn=lambda device: _to_float(
+            (device.get_lspu_account_data().get("balances") or [{}])[0].get("endBalanceApgp")
+        ),
+        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        translation_key="end_balance_apgp",
+        entity_registry_enabled_default=False,
+    ),
+    MyGasSensorEntityDescription(
+        key="prepayment_charged",
+        device_class=SensorDeviceClass.MONETARY,
+        native_unit_of_measurement="RUB",
+        value_fn=lambda device: _to_float(
+            (device.get_lspu_account_data().get("balances") or [{}])[0].get("prepaymentChargedAccumSum")
+        ),
+        avabl_fn=lambda device: bool(device.get_lspu_account_data().get("balances")),
+        translation_key="prepayment_charged",
+        entity_registry_enabled_default=False,
+    ),
+    MyGasSensorEntityDescription(
         key="current_timestamp",
-        name="Последнее обновление",
         device_class=SensorDeviceClass.TIMESTAMP,
         value_fn=lambda device: device.coordinator.data.get(ATTR_LAST_UPDATE_TIME),
         avabl_fn=lambda device: ATTR_LAST_UPDATE_TIME in device.coordinator.data,
@@ -57,8 +247,6 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
     ),
     MyGasSensorEntityDescription(
         key="counter",
-        name="Счетчик",
-        icon="mdi:counter",
         value_fn=lambda device: device.get_counter_data().get("name"),
         avabl_fn=lambda device: "name" in device.get_counter_data(),
         translation_key="counter",
@@ -67,21 +255,17 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
     ),
     MyGasSensorEntityDescription(
         key="average_rate",
-        name="Средний расход",
         native_unit_of_measurement=UnitOfVolume.CUBIC_METERS,
         suggested_display_precision=1,
         device_class=SensorDeviceClass.GAS,
-        # state_class=SensorStateClass.TOTAL,
         value_fn=lambda device: _to_float(device.get_counter_data().get("averageRate")),
         avabl_fn=lambda device: "averageRate" in device.get_counter_data(),
         translation_key="average_rate",
     ),
     MyGasSensorEntityDescription(
         key="price",
-        name="Цена за м³",
-        native_unit_of_measurement="RUB/m³",
+        native_unit_of_measurement="RUB/m\u00b3",
         device_class=SensorDeviceClass.MONETARY,
-        # state_class=SensorStateClass.TOTAL,
         value_fn=lambda device: _to_float(
             device.get_counter_data().get("price", {}).get("day")
         ),
@@ -90,7 +274,6 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
     ),
     MyGasSensorEntityDescription(
         key="readings_date",
-        name="Дата показаний",
         device_class=SensorDeviceClass.DATE,
         value_fn=lambda device: _to_date(
             device.get_latest_readings().get("date"), "%Y-%m-%dT%H:%M:%S"
@@ -100,7 +283,6 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
     ),
     MyGasSensorEntityDescription(
         key="readings",
-        name="Показания",
         native_unit_of_measurement=UnitOfVolume.CUBIC_METERS,
         suggested_display_precision=1,
         device_class=SensorDeviceClass.GAS,
@@ -111,7 +293,6 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
     ),
     MyGasSensorEntityDescription(
         key="consumption",
-        name="Потребление",
         native_unit_of_measurement=UnitOfVolume.CUBIC_METERS,
         suggested_display_precision=1,
         device_class=SensorDeviceClass.GAS,
@@ -121,6 +302,56 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
         translation_key="consumption",
     ),
 )
+
+_ACCOUNT_SENSOR_KEYS = {
+    "account", "balance", "charged", "paid", "debt",
+    "balance_period", "balance_date", "balance_start", "balance_end",
+    "charged_volume", "circulation", "forgiven_debt", "planned",
+    "privilege", "privilege_volume", "restored_debt",
+    "payment_adjustments", "end_balance_apgp", "prepayment_charged",
+    "current_timestamp",
+}
+
+ACCOUNT_SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = tuple(
+    desc for desc in SENSOR_TYPES if desc.key in _ACCOUNT_SENSOR_KEYS
+)
+
+
+class MyGasAccountSensorEntity(MyGasAccountCoordinatorEntity, SensorEntity):
+    """MyGas Account-level Sensor Entity."""
+
+    entity_description: MyGasSensorEntityDescription
+
+    def __init__(
+        self,
+        coordinator: MyGasCoordinator,
+        entity_description: MyGasSensorEntityDescription,
+        account_id: int,
+        lspu_account_id: int,
+    ) -> None:
+        """Initialize the Entity."""
+        super().__init__(coordinator, account_id, lspu_account_id)
+        self.entity_description = entity_description
+        account_number = coordinator.get_account_number(account_id, lspu_account_id)
+        self._attr_unique_id = make_entity_unique_id(
+            make_account_device_id(account_number), entity_description.key
+        )
+
+    @property
+    def available(self) -> bool:
+        """Return True if sensor is available."""
+        return (
+            super().available
+            and self.coordinator.data is not None
+            and self.entity_description.avabl_fn(self)
+        )
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        self._attr_native_value = self.entity_description.value_fn(self)
+        self._attr_extra_state_attributes = self.entity_description.attr_fn(self)
+        super()._handle_coordinator_update()
 
 
 class MyGasCounterCoordinatorEntity(MyGasBaseCoordinatorEntity, SensorEntity):
@@ -139,15 +370,10 @@ class MyGasCounterCoordinatorEntity(MyGasBaseCoordinatorEntity, SensorEntity):
         """Initialize the Entity."""
         super().__init__(coordinator, account_id, lspu_group_id, counter_id)
         self.entity_description = entity_description
-        device_info = self.device_info
-        assert device_info
-        identifiers = device_info.get(ATTR_IDENTIFIERS)
-        assert identifiers
-        ids = [*list(next(iter(identifiers))), entity_description.key]
-        self._attr_unique_id = slugify("_".join(ids))
-
-        self.entity_id = async_generate_entity_id(
-            ENTITY_ID_FORMAT, self.unique_id, hass=coordinator.hass
+        account_number = coordinator.get_account_number(account_id, lspu_group_id)
+        counter_uuid = coordinator.get_counters(account_id, lspu_group_id)[counter_id].get("uuid", "")
+        self._attr_unique_id = make_entity_unique_id(
+            make_device_id(account_number, counter_uuid), entity_description.key
         )
 
     @property
@@ -164,28 +390,31 @@ class MyGasCounterCoordinatorEntity(MyGasBaseCoordinatorEntity, SensorEntity):
         """Handle updated data from the coordinator."""
         self._attr_native_value = self.entity_description.value_fn(self)
         self._attr_extra_state_attributes = self.entity_description.attr_fn(self)
-        if self.entity_description.icon_fn is not None:
-            self._attr_icon = self.entity_description.icon_fn(self)
-
-        self.coordinator.logger.debug(
-            "Entity ID: %s Value: %s", self.entity_id, self.native_value
-        )
-
         super()._handle_coordinator_update()
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: MyGasConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up a config entry."""
+    coordinator = entry.runtime_data
 
-    coordinator: MyGasCoordinator = hass.data[DOMAIN][entry.entry_id]
-
-    entities: list[MyGasCounterCoordinatorEntity] = []
+    entities: list[MyGasAccountSensorEntity | MyGasCounterCoordinatorEntity] = []
     for account_id in coordinator.get_accounts():
         for lspu_account_id in range(len(coordinator.get_lspu_accounts(account_id))):
+            # Account-level sensors (always created)
+            entities.extend(
+                MyGasAccountSensorEntity(
+                    coordinator,
+                    entity_description,
+                    account_id,
+                    lspu_account_id,
+                )
+                for entity_description in ACCOUNT_SENSOR_TYPES
+            )
+            # Counter-level sensors
             for counter_id in range(
                 len(coordinator.get_counters(account_id, lspu_account_id))
             ):
