@@ -5,30 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.0] - 2026-02-18
-
-### Added
-
- - Добавлен Options Flow для настройки интервала обновления данных (1-168 часов, по умолчанию 24).
- - Добавлены переводы исключений (translated exceptions) в сервисах.
- - Добавлены секции `options` и `exceptions` в `strings.json` и файлы переводов.
-
-### Changed
-
- - Декоратор `async_api_request_handler` разделён на `async_retry` (чистая логика повторов) и `async_api_request_handler` (маппинг исключений для координатора).
- - Валидация в config flow использует `async_retry` и общий метод `_async_try_validate`, убрана дублированная обработка ошибок.
- - Переименовано `avabl_fn` → `available_fn` в entity descriptions.
- - Переименованы приватные хелперы `_to_str`, `_to_float`, `_to_int`, `_to_date` → `to_str`, `to_float`, `to_int`, `to_date`.
- - Добавлены аннотации `Final` к константам `SERVICE_SEND_READINGS`, `ATTR_ELS`, `ATTR_IS_ELS`, `ATTR_LSPU_INFO_GROUP`.
- - Убраны `after_dependencies` и `integration_type` из `manifest.json`.
- - Версия обновлена до 2.1.0.
-
-### Fixed
-
- - Исправлена ошибка `date.today()` → `dt_util.now().date()` в `helpers.py` и `coordinator.py` (учёт часового пояса HA).
- - Исправлена мёртвая обработка исключений в `_async_update_data`: `MyGasAuthError` не достигал блока, т.к. уже конвертировался декоратором.
- - Улучшена диагностика: редактирование `phone` и `email` в данных координатора.
-
 ## [2.0.0] - 2026-02-18
 
 ### Added
@@ -39,8 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Устройства счетчиков привязаны к устройству аккаунта через `via_device`.
  - Добавлены сенсоры расчетного периода: начислено, оплачено, задолженность за период (включены по умолчанию), а также 14 дополнительных сенсоров (отключены по умолчанию): расчетный период, дата периода, сальдо на начало/конец, начисленный объем, оборот, списанная задолженность, плановая сумма, льготы, льготный объем, восстановленная задолженность, корректировки платежей, сальдо АПГП, авансовые начисления.
  - Устройства аккаунтов получили информативные имена: `ЛС {номер} ({алиас})`.
+ - Добавлен Options Flow для настройки интервала обновления данных (1-168 часов, по умолчанию 24).
  - Добавлен модуль диагностики (`diagnostics.py`).
- - Добавлен файл `strings.json` для hassfest.
+ - Добавлены переводы исключений (translated exceptions) в сервисах.
+ - Добавлен файл `strings.json` для hassfest с секциями `options` и `exceptions`.
  - Добавлены шаги `reconfigure` и `reauth_confirm` в переводы.
  - Добавлены юнит-тесты (config flow, init, coordinator, устройства аккаунта, сенсоры расчетного периода).
  - Добавлен CI workflow для запуска тестов.
@@ -48,25 +26,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
  - Миграция на `runtime_data` вместо `hass.data[DOMAIN]`.
+ - Декоратор `async_api_request_handler` разделён на `async_retry` (чистая логика повторов) и `async_api_request_handler` (маппинг исключений для координатора).
+ - Валидация в config flow использует `async_retry` и общий метод `_async_try_validate`, убрана дублированная обработка ошибок.
  - Выделен общий базовый класс `MyGasCoordinatorEntity` для сущностей аккаунта и счетчика.
  - Извлечен хелпер `make_entity_unique_id()` для генерации unique_id сущностей.
- - Убран `update_listener` (options flow отсутствует).
  - Упрощена выгрузка интеграции (`async_unload_entry`).
  - Координатор использует внутренний `_LOGGER` и `config_entry=` в `super().__init__()`.
  - Упрощены entity description классы (убран Mixin, один класс).
  - Убраны hardcoded `name` и `icon` из entity descriptions (используются `translation_key` и `icons.json`).
  - Убрана ручная генерация `entity_id` (`async_generate_entity_id`).
  - `sw_version` в DeviceInfo заменён на `aiomygas.__version__`.
+ - Переименовано `avabl_fn` → `available_fn` в entity descriptions.
+ - Переименованы приватные хелперы `_to_str`, `_to_float`, `_to_int`, `_to_date` → `to_str`, `to_float`, `to_int`, `to_date`.
+ - Добавлены аннотации `Final` к константам.
  - Удалены неиспользуемые константы, хелперы и исключения.
  - Сужен перехват исключений в `services.py`.
  - Улучшена типизация: добавлены аннотации типов в координатор и entity descriptions.
  - Рефакторинг `find_account_by_device_id()` — кэширование `get_counters()`, использование `enumerate()`.
- - Обновлён `manifest.json`: убраны пустые массивы, обновлена версия.
+ - Обновлён `manifest.json`: убраны `after_dependencies`, `integration_type`, пустые массивы.
  - Обновлена зависимость `aiomygas` до версии 2.4.
  - Обновлён `hassfest.yaml` на `actions/checkout@v4`.
 
 ### Fixed
 
+ - Исправлена ошибка `date.today()` → `dt_util.now().date()` в `helpers.py` и `coordinator.py` (учёт часового пояса HA).
+ - Исправлена мёртвая обработка исключений в `_async_update_data`: `MyGasAuthError` не достигал блока, т.к. уже конвертировался декоратором.
  - Исправлена ошибка `is list` вместо `isinstance()` при обработке ответа LSPU API.
  - Исправлена ошибка `NameError` при первом показе формы реавторизации.
  - Добавлена валидация учетных данных при реконфигурации.
@@ -74,6 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Исправлена обработка ошибок аутентификации — `ConfigEntryAuthFailed` больше не перехватывается как `UpdateFailed`.
  - Исправлена опечатка `lspu_acount_id` → `lspu_account_id` в координаторе.
  - Убрано устаревшее предупреждение в логах для аккаунтов без счетчиков.
+ - Диагностика: редактирование `phone` и `email` в данных координатора.
 
 ## [1.6.1] - 2025-11-23
 
