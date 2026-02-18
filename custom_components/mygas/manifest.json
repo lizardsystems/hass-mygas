@@ -1,10 +1,10 @@
 {
   "domain": "mygas",
   "name": "MyGas",
+  "after_dependencies": ["http"],
   "codeowners": [
     "@lizardsystems"
   ],
-  "after_dependencies": ["http"],
   "config_flow": true,
   "documentation": "https://github.com/lizardsystems/hass-mygas",
   "integration_type": "hub",
