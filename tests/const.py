@@ -45,6 +45,46 @@ MOCK_LSPU_INFO_RESPONSE = {
             "prepaymentChargedAccumSum": 0.00,
         }
     ],
+    "services": [
+        {
+            "id": "02",
+            "name": "Газоснабжение природным газом",
+            "balance": "-6.32",
+            "providerName": 'ООО "Газпром межрегионгаз"',
+            "children": [
+                {
+                    "name": "Плита и колонка(+От)",
+                    "norm": 29.52,
+                    "price": 9.014,
+                    "tariff": 266.09328,
+                    "equipmentUuid": "abc-def-123",
+                    "startDate": "2017-10-09T00:00:00",
+                },
+                {
+                    "name": "Отопление",
+                    "norm": 12.4,
+                    "price": 9.014,
+                    "tariff": 111.7736,
+                    "equipmentUuid": None,
+                    "startDate": "2020-01-01T00:00:00",
+                },
+            ],
+        },
+        {
+            "id": "04",
+            "name": "Пеня за газ",
+            "balance": "-3.69",
+            "providerName": 'ООО "Газпром межрегионгаз"',
+            "children": [],
+        },
+        {
+            "id": "61",
+            "name": "Техническое обслуживание",
+            "balance": "0",
+            "providerName": 'ООО "Газпром межрегионгаз"',
+            "children": [],
+        },
+    ],
     "counters": [
         {
             "uuid": "abc-def-123",
