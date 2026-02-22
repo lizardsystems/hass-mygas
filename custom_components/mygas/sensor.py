@@ -19,6 +19,7 @@ from .entity import (
     MyGasAccountCoordinatorEntity,
     MyGasBaseCoordinatorEntity,
     MyGasSensorEntityDescription,
+    MyGasServiceCoordinatorEntity,
 )
 from .helpers import (
     to_date,
@@ -27,6 +28,7 @@ from .helpers import (
     make_account_device_id,
     make_device_id,
     make_entity_unique_id,
+    make_service_device_id,
 )
 
 SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
@@ -273,6 +275,28 @@ SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = (
         translation_key="price",
     ),
     MyGasSensorEntityDescription(
+        key="price_middle",
+        native_unit_of_measurement="RUB/m\u00b3",
+        device_class=SensorDeviceClass.MONETARY,
+        value_fn=lambda device: to_float(
+            device.get_counter_data().get("price", {}).get("middle")
+        ),
+        available_fn=lambda device: "price" in device.get_counter_data(),
+        translation_key="price_middle",
+        entity_registry_enabled_default=False,
+    ),
+    MyGasSensorEntityDescription(
+        key="price_night",
+        native_unit_of_measurement="RUB/m\u00b3",
+        device_class=SensorDeviceClass.MONETARY,
+        value_fn=lambda device: to_float(
+            device.get_counter_data().get("price", {}).get("night")
+        ),
+        available_fn=lambda device: "price" in device.get_counter_data(),
+        translation_key="price_night",
+        entity_registry_enabled_default=False,
+    ),
+    MyGasSensorEntityDescription(
         key="readings_date",
         device_class=SensorDeviceClass.DATE,
         value_fn=lambda device: to_date(
@@ -314,6 +338,17 @@ _ACCOUNT_SENSOR_KEYS = {
 
 ACCOUNT_SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = tuple(
     desc for desc in SENSOR_TYPES if desc.key in _ACCOUNT_SENSOR_KEYS
+)
+
+_MULTI_TARIFF_SENSOR_KEYS = {"price_middle", "price_night"}
+
+COUNTER_SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = tuple(
+    desc for desc in SENSOR_TYPES
+    if desc.key not in _ACCOUNT_SENSOR_KEYS and desc.key not in _MULTI_TARIFF_SENSOR_KEYS
+)
+
+MULTI_TARIFF_SENSOR_TYPES: tuple[MyGasSensorEntityDescription, ...] = tuple(
+    desc for desc in SENSOR_TYPES if desc.key in _MULTI_TARIFF_SENSOR_KEYS
 )
 
 
@@ -393,6 +428,90 @@ class MyGasCounterCoordinatorEntity(MyGasBaseCoordinatorEntity, SensorEntity):
         super()._handle_coordinator_update()
 
 
+class MyGasServiceBalanceSensorEntity(MyGasServiceCoordinatorEntity, SensorEntity):
+    """MyGas Service balance Sensor Entity."""
+
+    _attr_device_class = SensorDeviceClass.MONETARY
+    _attr_native_unit_of_measurement = "RUB"
+    _attr_translation_key = "service_balance"
+
+    def __init__(
+        self,
+        coordinator: MyGasCoordinator,
+        account_id: int,
+        lspu_account_id: int,
+        service_id: int,
+    ) -> None:
+        """Initialize the Entity."""
+        super().__init__(coordinator, account_id, lspu_account_id, service_id)
+
+        service = coordinator.get_services(account_id, lspu_account_id)[service_id]
+        account_number = coordinator.get_account_number(account_id, lspu_account_id)
+        device_identifier = make_service_device_id(account_number, service["id"])
+        self._attr_unique_id = make_entity_unique_id(
+            device_identifier, "service_balance"
+        )
+
+    @property
+    def available(self) -> bool:
+        """Return True if sensor is available."""
+        return super().available and self.coordinator.data is not None
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        service = self.get_service_data()
+        self._attr_native_value = to_float(service.get("balance"))
+        super()._handle_coordinator_update()
+
+
+class MyGasServiceTariffSensorEntity(MyGasServiceCoordinatorEntity, SensorEntity):
+    """MyGas Service tariff rate Sensor Entity."""
+
+    _attr_device_class = SensorDeviceClass.MONETARY
+    _attr_native_unit_of_measurement = "RUB"
+
+    def __init__(
+        self,
+        coordinator: MyGasCoordinator,
+        account_id: int,
+        lspu_account_id: int,
+        service_id: int,
+        child_id: int,
+    ) -> None:
+        """Initialize the Entity."""
+        super().__init__(coordinator, account_id, lspu_account_id, service_id)
+        self.child_id = child_id
+
+        service = coordinator.get_services(account_id, lspu_account_id)[service_id]
+        child = service["children"][child_id]
+
+        account_number = coordinator.get_account_number(account_id, lspu_account_id)
+        device_identifier = make_service_device_id(account_number, service["id"])
+        self._attr_unique_id = make_entity_unique_id(
+            device_identifier, f"service_tariff_{child_id}"
+        )
+        self._attr_translation_key = "service_tariff"
+        self._attr_name = child["name"]
+
+    @property
+    def available(self) -> bool:
+        """Return True if sensor is available."""
+        return super().available and self.coordinator.data is not None
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        child = self.get_child_data(self.child_id)
+        self._attr_native_value = to_float(child.get("tariff"))
+        self._attr_extra_state_attributes = {
+            "Норматив потребления": to_float(child.get("norm")),
+            "Цена за м\u00b3": to_float(child.get("price")),
+            "Дата начала": to_date(child.get("startDate"), "%Y-%m-%dT%H:%M:%S"),
+        }
+        super()._handle_coordinator_update()
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: MyGasConfigEntry,
@@ -401,7 +520,12 @@ async def async_setup_entry(
     """Set up a config entry."""
     coordinator = entry.runtime_data
 
-    entities: list[MyGasAccountSensorEntity | MyGasCounterCoordinatorEntity] = []
+    entities: list[
+        MyGasAccountSensorEntity
+        | MyGasCounterCoordinatorEntity
+        | MyGasServiceBalanceSensorEntity
+        | MyGasServiceTariffSensorEntity
+    ] = []
     for account_id in coordinator.get_accounts():
         for lspu_account_id in range(len(coordinator.get_lspu_accounts(account_id))):
             # Account-level sensors (always created)
@@ -415,9 +539,8 @@ async def async_setup_entry(
                 for entity_description in ACCOUNT_SENSOR_TYPES
             )
             # Counter-level sensors
-            for counter_id in range(
-                len(coordinator.get_counters(account_id, lspu_account_id))
-            ):
+            counters = coordinator.get_counters(account_id, lspu_account_id)
+            for counter_id, counter in enumerate(counters):
                 entities.extend(
                     MyGasCounterCoordinatorEntity(
                         coordinator,
@@ -426,7 +549,42 @@ async def async_setup_entry(
                         lspu_account_id,
                         counter_id,
                     )
-                    for entity_description in SENSOR_TYPES
+                    for entity_description in COUNTER_SENSOR_TYPES
                 )
+                # Multi-tariff sensors (only for numberOfRates > 1)
+                if counter.get("numberOfRates", 1) > 1:
+                    entities.extend(
+                        MyGasCounterCoordinatorEntity(
+                            coordinator,
+                            entity_description,
+                            account_id,
+                            lspu_account_id,
+                            counter_id,
+                        )
+                        for entity_description in MULTI_TARIFF_SENSOR_TYPES
+                    )
+            # Service-level sensors
+            services = coordinator.get_services(account_id, lspu_account_id)
+            for service_idx, service in enumerate(services):
+                # Balance sensor (always created for each service)
+                entities.append(
+                    MyGasServiceBalanceSensorEntity(
+                        coordinator,
+                        account_id,
+                        lspu_account_id,
+                        service_idx,
+                    )
+                )
+                # Tariff rate sensors (one per child)
+                for child_idx in range(len(service.get("children", []))):
+                    entities.append(
+                        MyGasServiceTariffSensorEntity(
+                            coordinator,
+                            account_id,
+                            lspu_account_id,
+                            service_idx,
+                            child_idx,
+                        )
+                    )
 
     async_add_entities(entities, True)

@@ -117,6 +117,12 @@
       "price": {
         "name": "Цена за м³"
       },
+      "price_middle": {
+        "name": "Цена за м³ (полупик)"
+      },
+      "price_night": {
+        "name": "Цена за м³ (ночь)"
+      },
       "readings_date": {
         "name": "Дата показаний"
       },
@@ -125,6 +131,12 @@
       },
       "consumption": {
         "name": "Потребление"
+      },
+      "service_balance": {
+        "name": "Баланс"
+      },
+      "service_tariff": {
+        "name": "Тарифная ставка"
       }
     },
     "button": {

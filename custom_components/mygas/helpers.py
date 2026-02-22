@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 from homeassistant.util import dt as dt_util, slugify
 
-from .const import ATTR_COUNTER, DOMAIN
+from .const import ATTR_COUNTER, ATTR_SERVICES, DOMAIN
 
 if TYPE_CHECKING:
     from .coordinator import MyGasCoordinator
@@ -120,3 +120,8 @@ def make_account_device_id(account_number: str) -> str:
 def make_device_id(account_number: str, counter_uuid: str) -> str:
     """Get device id."""
     return slugify(f"{account_number}_{ATTR_COUNTER}_{counter_uuid}")
+
+
+def make_service_device_id(account_number: str, service_id: str) -> str:
+    """Get service-level device id."""
+    return slugify(f"{account_number}_{ATTR_SERVICES}_{service_id}")

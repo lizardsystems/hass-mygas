@@ -9,7 +9,7 @@ from homeassistant.helpers import device_registry as dr
 
 from .const import ATTR_UUID, DOMAIN, PLATFORMS
 from .coordinator import MyGasCoordinator
-from .helpers import make_account_device_id, make_device_id
+from .helpers import make_account_device_id, make_device_id, make_service_device_id
 from .services import async_setup_services
 
 _LOGGER = logging.getLogger(__name__)
@@ -57,6 +57,13 @@ def _async_remove_stale_devices(
                 if counter_uuid:
                     current_identifiers.add(
                         make_device_id(account_number, counter_uuid)
+                    )
+            # Service-level devices
+            for service in coordinator.get_services(account_id, lspu_account_id):
+                service_id = service.get("id")
+                if service_id:
+                    current_identifiers.add(
+                        make_service_device_id(account_number, service_id)
                     )
 
     for device_entry in dr.async_entries_for_config_entry(

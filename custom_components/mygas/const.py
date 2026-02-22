@@ -11,6 +11,7 @@ DOMAIN: Final = "mygas"
 ATTRIBUTION: Final = "Данные получены от Мой Газ"
 MANUFACTURER: Final = "Мой Газ"
 ACCOUNT_MODEL: Final = "Лицевой счет"
+SERVICE_MODEL: Final = "Услуга"
 
 API_TIMEOUT: Final = 30
 API_MAX_TRIES: Final = 3
@@ -41,6 +42,7 @@ ATTR_ELS: Final = "els"
 ATTR_IS_ELS: Final = "is_els"
 ATTR_LSPU_INFO_GROUP: Final = "lspuInfoGroup"
 ATTR_COUNTERS: Final = "counters"
+ATTR_SERVICES: Final = "services"
 ATTR_ALIAS: Final = "alias"
 ATTR_LAST_UPDATE_TIME: Final = "last_update_time"
 ATTR_JNT_ACCOUNT_NUM: Final = "jntAccountNum"

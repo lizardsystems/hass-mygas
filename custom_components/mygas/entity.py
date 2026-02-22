@@ -23,9 +23,17 @@ from .const import (
     CONFIGURATION_URL,
     DOMAIN,
     MANUFACTURER,
+    SERVICE_MODEL,
 )
 from .coordinator import MyGasCoordinator
-from .helpers import to_date, to_int, to_str, make_account_device_id, make_device_id
+from .helpers import (
+    to_date,
+    to_int,
+    to_str,
+    make_account_device_id,
+    make_device_id,
+    make_service_device_id,
+)
 
 
 class MyGasCoordinatorEntity(CoordinatorEntity[MyGasCoordinator]):
@@ -182,3 +190,49 @@ class MyGasBaseCoordinatorEntity(MyGasCoordinatorEntity):
                 counter.get("commissionedOn"), "%Y-%m-%dT%H:%M:%S"
             ),
         }
+
+
+class MyGasServiceCoordinatorEntity(MyGasCoordinatorEntity):
+    """MyGas Service-level Entity."""
+
+    def __init__(
+        self,
+        coordinator: MyGasCoordinator,
+        account_id: int,
+        lspu_account_id: int,
+        service_id: int,
+    ) -> None:
+        """Initialize the Entity."""
+        super().__init__(coordinator, account_id, lspu_account_id)
+        self.service_id = service_id
+
+        service = coordinator.get_services(self.account_id, self.lspu_account_id)[
+            service_id
+        ]
+
+        account_number = coordinator.get_account_number(
+            self.account_id, self.lspu_account_id
+        )
+
+        device_id = make_service_device_id(account_number, service["id"])
+
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, device_id)},
+            via_device=(DOMAIN, make_account_device_id(account_number)),
+            manufacturer=MANUFACTURER,
+            model=SERVICE_MODEL,
+            name=service["name"],
+            sw_version=aiomygas.__version__,
+            configuration_url=CONFIGURATION_URL,
+        )
+
+    def get_service_data(self) -> dict[str, Any]:
+        """Get service data."""
+        return self.coordinator.get_services(self.account_id, self.lspu_account_id)[
+            self.service_id
+        ]
+
+    def get_child_data(self, child_id: int) -> dict[str, Any]:
+        """Get child (tariff rate) data."""
+        service = self.get_service_data()
+        return service["children"][child_id]

@@ -26,6 +26,7 @@ from .const import (
     ATTR_JNT_ACCOUNT_NUM,
     ATTR_LAST_UPDATE_TIME,
     ATTR_LSPU_INFO_GROUP,
+    ATTR_SERVICES,
     ATTR_UUID,
     CONF_ACCOUNT,
     CONF_ACCOUNTS,
@@ -244,6 +245,13 @@ class MyGasCoordinator(DataUpdateCoordinator):
         """Get counter data."""
         _accounts = self.get_lspu_accounts(account_id)[lspu_account_id]
         return _accounts.get(ATTR_COUNTERS, [])
+
+    def get_services(
+        self, account_id: int, lspu_account_id: int
+    ) -> list[dict[str, Any]]:
+        """Get services."""
+        account = self.get_lspu_accounts(account_id)[lspu_account_id]
+        return account.get(ATTR_SERVICES, [])
 
     async def find_account_by_device_id(
         self, device_id: str

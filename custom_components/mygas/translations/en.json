@@ -117,6 +117,12 @@
       "price": {
         "name": "Price"
       },
+      "price_middle": {
+        "name": "Price (semi-peak)"
+      },
+      "price_night": {
+        "name": "Price (night)"
+      },
       "readings_date": {
         "name": "Readings Date"
       },
@@ -125,6 +131,12 @@
       },
       "consumption": {
         "name": "Consumption"
+      },
+      "service_balance": {
+        "name": "Balance"
+      },
+      "service_tariff": {
+        "name": "Tariff rate"
       }
     },
     "button": {
