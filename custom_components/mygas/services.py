@@ -217,7 +217,15 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 "Service call '%s' successfully finished", service_call.service
             )
 
-        except HomeAssistantError:
+        except HomeAssistantError as exc:
+            hass.bus.async_fire(
+                event_type=f"{DOMAIN}_{service_call.service}_failed",
+                event_data={
+                    ATTR_DEVICE_ID: service_call.data.get(ATTR_DEVICE_ID),
+                    CONF_ERROR: str(exc),
+                },
+                context=service_call.context,
+            )
             raise
         except (MyGasApiError, MyGasAuthError) as exc:
             _LOGGER.error(
