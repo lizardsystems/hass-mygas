@@ -12,7 +12,7 @@ from pytest_homeassistant_custom_component.common import MockConfigEntry
 from custom_components.mygas.const import DOMAIN
 from custom_components.mygas.helpers import make_account_device_id, make_device_id
 
-from .const import MOCK_LSPU_INFO_RESPONSE
+from .const import MOCK_LSPU_INFO_NO_BALANCES, MOCK_LSPU_INFO_RESPONSE
 
 
 # Response with no counters
@@ -25,12 +25,6 @@ MOCK_LSPU_INFO_NO_COUNTERS = {
         {"name": "Адрес", "value": "г. Москва, ул. Другая, д. 5"},
     ],
     "counters": [],
-}
-
-# Response without balances array
-MOCK_LSPU_INFO_NO_BALANCES = {
-    **MOCK_LSPU_INFO_RESPONSE,
-    "balances": [],
 }
 
 

@@ -31,7 +31,7 @@ from .const import (
     SERVICE_SEND_READINGS,
 )
 from .coordinator import MyGasCoordinator
-from .helpers import async_get_coordinator, get_bill_date, get_float_value
+from .helpers import async_get_coordinator, get_float_value
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -147,7 +147,7 @@ async def _async_handle_get_bill(
     hass: HomeAssistant, service_call: ServiceCall, coordinator: MyGasCoordinator
 ) -> dict[str, Any]:
     device_id = service_call.data.get(ATTR_DEVICE_ID)
-    bill_date = service_call.data.get(ATTR_DATE, get_bill_date())
+    bill_date = service_call.data.get(ATTR_DATE)
     email = service_call.data.get(ATTR_EMAIL)
     if device_id is None:
         raise HomeAssistantError(

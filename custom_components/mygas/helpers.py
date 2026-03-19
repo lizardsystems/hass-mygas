@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
-from homeassistant.util import dt as dt_util, slugify
+from homeassistant.util import slugify
 
 from .const import ATTR_COUNTER, ATTR_SERVICES, DOMAIN
 
@@ -51,12 +51,6 @@ def get_float_value(hass: HomeAssistant, entity_id: str | None) -> float | None:
         if cur_state is not None:
             return to_float(cur_state.state)
     return None
-
-
-def get_bill_date() -> date:
-    """Get first day of current month."""
-    today = dt_util.now().date()
-    return today.replace(day=1)  # first day of current month
 
 
 def to_str(value: Any) -> str | None:

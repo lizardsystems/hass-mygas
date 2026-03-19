@@ -126,6 +126,12 @@ MOCK_SEND_READINGS_RESPONSE = [
     }
 ]
 
+# LSPU info without balances
+MOCK_LSPU_INFO_NO_BALANCES = {
+    **MOCK_LSPU_INFO_RESPONSE,
+    "balances": [],
+}
+
 # Receipt response
 MOCK_RECEIPT_RESPONSE = {
     "url": "https://example.com/receipt.pdf",

@@ -339,6 +339,21 @@ class MyGasCoordinator(DataUpdateCoordinator):
             is_els,
         )
 
+    def _get_latest_bill_date(
+        self, account_id: int, lspu_account_id: int
+    ) -> date:
+        """Get the latest bill date from balances, or 1st of previous month."""
+        try:
+            lspu_accounts = self.get_lspu_accounts(account_id)
+            account = lspu_accounts[lspu_account_id]
+            balances = account.get("balances", [])
+            if balances and balances[0].get("date"):
+                return date.fromisoformat(balances[0]["date"])
+        except (IndexError, KeyError, ValueError):
+            pass
+        today = dt_util.now().date()
+        return (today.replace(day=1) - timedelta(days=1)).replace(day=1)
+
     async def async_get_bill(
         self,
         device_id: str,
@@ -346,16 +361,18 @@ class MyGasCoordinator(DataUpdateCoordinator):
         email: str | None = None,
     ) -> dict[str, Any] | None:
         """Get receipt data."""
+        account_id, lspu_account_id, _ = await self.find_account_by_device_id(
+            device_id
+        )
+        if account_id is None:
+            return None
         if bill_date is None:
-            bill_date = dt_util.now().date()
+            bill_date = self._get_latest_bill_date(account_id, lspu_account_id)
         date_iso_short = bill_date.strftime("%Y-%m-%d")
-        account_id, *_ = await self.find_account_by_device_id(device_id)
-        if account_id is not None:
-            is_els = self.is_els()
-            return await self._async_get_receipt(
-                date_iso_short, email, account_id, is_els
-            )
-        return None
+        is_els = self.is_els()
+        return await self._async_get_receipt(
+            date_iso_short, email, account_id, is_els
+        )
 
     async def async_send_readings(
         self,
