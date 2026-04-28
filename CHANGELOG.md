@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.3] - 2026-04-28
+
+### Fixed
+
+ - Исправлена ошибка вызова сервиса `mygas.get_bill` с указанием email: схема использовала `vol.Email` без скобок, из-за чего вместо валидации значение поля становилось функцией и сервис падал с `Type is not JSON serializable: function` ([#21](https://github.com/lizardsystems/hass-mygas/issues/21)).
+
 ## [2.1.2] - 2026-03-19
 
 ### Fixed

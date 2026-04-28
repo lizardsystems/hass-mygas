@@ -56,7 +56,7 @@ SERVICE_GET_BILL_SCHEMA = vol.Schema(
     {
         **SERVICE_BASE_SCHEMA,
         vol.Optional(ATTR_DATE): cv.date,
-        vol.Optional(ATTR_EMAIL): vol.Email,
+        vol.Optional(ATTR_EMAIL): vol.Email(),
     },
 )
 
