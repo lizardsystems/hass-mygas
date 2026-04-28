@@ -9,7 +9,7 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.mygas.const import DOMAIN
+from custom_components.mygas.const import DOMAIN, SERVICE_GET_BILL
 from custom_components.mygas.helpers import make_account_device_id
 
 from .const import MOCK_LSPU_INFO_NO_BALANCES, MOCK_LSPU_INFO_RESPONSE
@@ -113,3 +113,42 @@ async def test_get_bill_with_explicit_date(
     mock_api.async_get_receipt.assert_called_once()
     call_args = mock_api.async_get_receipt.call_args
     assert call_args[0][0] == "2025-06-15"
+
+
+# ---------------------------------------------------------------------------
+# Service call with email passes schema validation (regression for issue #21)
+# ---------------------------------------------------------------------------
+
+
+async def test_get_bill_service_with_email(
+    hass: HomeAssistant,
+    mock_config_entry: MockConfigEntry,
+    mock_auth: AsyncMock,
+    mock_api: AsyncMock,
+) -> None:
+    """Service call with email must validate to a string, not a function.
+
+    Regression for issue #21: vol.Email (without parens) is a factory; using
+    it directly turned the validated email into a function reference, which
+    later failed JSON serialization with "Type is not JSON serializable: function".
+    """
+    mock_config_entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(mock_config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    device = _get_account_device(hass)
+
+    await hass.services.async_call(
+        DOMAIN,
+        SERVICE_GET_BILL,
+        {
+            "device_id": device.id,
+            "date": "2026-04-27",
+            "email": "user@example.com",
+        },
+        blocking=True,
+    )
+
+    mock_api.async_get_receipt.assert_called_once()
+    call_args = mock_api.async_get_receipt.call_args
+    assert call_args[0][1] == "user@example.com"
