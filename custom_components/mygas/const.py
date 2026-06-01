@@ -27,7 +27,10 @@ CONF_INFO: Final = "info"
 CONF_SCAN_INTERVAL: Final = "scan_interval"
 DEFAULT_SCAN_INTERVAL: Final = 24
 
-CONFIGURATION_URL: Final = "https://мойгаз.смородина.онлайн/"
+# Punycode (IDNA) encoding of "https://мойгаз.смородина.онлайн/".
+# The raw Cyrillic host fails to parse in Home Assistant on Python 3.14
+# (yarl/idna), so the device configuration_url is stored pre-encoded.
+CONFIGURATION_URL: Final = "https://xn--80afnfom.xn--80ahmohdapg.xn--80asehdb/"
 
 ATTR_VALUE: Final = "value"
 ATTR_EMAIL: Final = "email"

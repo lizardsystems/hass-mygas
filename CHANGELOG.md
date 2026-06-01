@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.4] - 2026-06-01
+
+### Fixed
+
+ - Исправлена ошибка разбора `configuration_url` устройства на Python 3.14: кириллический адрес `https://мойгаз.смородина.онлайн/` приводил к падению при добавлении сущностей (`IDNAError`/`ImportError` в `yarl`/`idna`), из-за чего сенсоры и кнопки переставали создаваться. Адрес теперь хранится в формате Punycode `https://xn--80afnfom.xn--80ahmohdapg.xn--80asehdb/` ([#24](https://github.com/lizardsystems/hass-mygas/issues/24)).
+
 ## [2.1.3] - 2026-04-28
 
 ### Fixed
