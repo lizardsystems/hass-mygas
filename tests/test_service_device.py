@@ -54,8 +54,8 @@ async def test_service_devices_created(
     device_registry = dr.async_get(hass)
 
     for service in SERVICES:
-        device = device_registry.async_get_device(
-            identifiers={(DOMAIN, make_service_device_id(ACCOUNT_NUMBER, service["id"]))}
+        device = device_registry.async_get_device_by_identifier(
+            (DOMAIN, make_service_device_id(ACCOUNT_NUMBER, service["id"])), mock_config_entry.entry_id
         )
         assert device is not None, f"Device for service {service['name']} not created"
         assert device.name == service["name"]
@@ -75,14 +75,14 @@ async def test_service_device_via_device(
 
     device_registry = dr.async_get(hass)
 
-    account_device = device_registry.async_get_device(
-        identifiers={(DOMAIN, make_account_device_id(ACCOUNT_NUMBER))}
+    account_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, make_account_device_id(ACCOUNT_NUMBER)), mock_config_entry.entry_id
     )
     assert account_device is not None
 
     service = SERVICES[0]
-    service_device = device_registry.async_get_device(
-        identifiers={(DOMAIN, make_service_device_id(ACCOUNT_NUMBER, service["id"]))}
+    service_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, make_service_device_id(ACCOUNT_NUMBER, service["id"])), mock_config_entry.entry_id
     )
     assert service_device is not None
     assert service_device.via_device_id == account_device.id
@@ -353,8 +353,8 @@ async def test_stale_service_device_removed(
         config_entry_id=mock_config_entry.entry_id,
         identifiers={(DOMAIN, make_service_device_id(ACCOUNT_NUMBER, "99"))},
     )
-    stale_device = device_registry.async_get_device(
-        identifiers={(DOMAIN, make_service_device_id(ACCOUNT_NUMBER, "99"))}
+    stale_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, make_service_device_id(ACCOUNT_NUMBER, "99")), mock_config_entry.entry_id
     )
     assert stale_device is not None
 
@@ -362,15 +362,15 @@ async def test_stale_service_device_removed(
     await hass.config_entries.async_reload(mock_config_entry.entry_id)
     await hass.async_block_till_done()
 
-    stale_device = device_registry.async_get_device(
-        identifiers={(DOMAIN, make_service_device_id(ACCOUNT_NUMBER, "99"))}
+    stale_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, make_service_device_id(ACCOUNT_NUMBER, "99")), mock_config_entry.entry_id
     )
     assert stale_device is None
 
     # Real service devices should still exist
     for service in SERVICES:
-        device = device_registry.async_get_device(
-            identifiers={(DOMAIN, make_service_device_id(ACCOUNT_NUMBER, service["id"]))}
+        device = device_registry.async_get_device_by_identifier(
+            (DOMAIN, make_service_device_id(ACCOUNT_NUMBER, service["id"])), mock_config_entry.entry_id
         )
         assert device is not None
 

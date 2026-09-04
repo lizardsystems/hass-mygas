@@ -1,5 +1,6 @@
 {
     "name": "MyGas Account integration",
     "render_readme": true,
-	"country": "RU"
+	"country": "RU",
+    "homeassistant": "2026.8.0"
 }

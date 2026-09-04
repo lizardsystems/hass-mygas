@@ -30,10 +30,33 @@ from .helpers import (
     to_date,
     to_int,
     to_str,
+    account_device_id,
     make_account_device_id,
     make_device_id,
     make_service_device_id,
 )
+
+
+def account_device_info(
+    coordinator: MyGasCoordinator, account_id: int, lspu_account_id: int
+) -> DeviceInfo:
+    """Return the device info of an account (LSPU) device."""
+    account_number = coordinator.get_account_number(account_id, lspu_account_id)
+    account_alias = coordinator.get_account_alias(account_id, lspu_account_id)
+
+    if account_alias:
+        device_name = f"ЛС {account_number} ({account_alias})"
+    else:
+        device_name = f"ЛС {account_number}"
+
+    return DeviceInfo(
+        identifiers={(DOMAIN, make_account_device_id(account_number))},
+        manufacturer=MANUFACTURER,
+        model=ACCOUNT_MODEL,
+        name=device_name,
+        sw_version=aiomygas.__version__,
+        configuration_url=CONFIGURATION_URL,
+    )
 
 
 class MyGasCoordinatorEntity(CoordinatorEntity[MyGasCoordinator]):
@@ -82,25 +105,8 @@ class MyGasAccountCoordinatorEntity(MyGasCoordinatorEntity):
         """Initialize the Entity."""
         super().__init__(coordinator, account_id, lspu_account_id)
 
-        account_number = coordinator.get_account_number(
-            self.account_id, self.lspu_account_id
-        )
-        account_alias = coordinator.get_account_alias(
-            self.account_id, self.lspu_account_id
-        )
-
-        if account_alias:
-            device_name = f"ЛС {account_number} ({account_alias})"
-        else:
-            device_name = f"ЛС {account_number}"
-
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, make_account_device_id(account_number))},
-            manufacturer=MANUFACTURER,
-            model=ACCOUNT_MODEL,
-            name=device_name,
-            sw_version=aiomygas.__version__,
-            configuration_url=CONFIGURATION_URL,
+        self._attr_device_info = account_device_info(
+            coordinator, self.account_id, self.lspu_account_id
         )
 
 
@@ -138,7 +144,7 @@ class MyGasBaseCoordinatorEntity(MyGasCoordinatorEntity):
 
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, device_id)},
-            via_device=(DOMAIN, make_account_device_id(account_number)),
+            via_device_id=account_device_id(coordinator, account_number),
             manufacturer=MANUFACTURER,
             model=counter[ATTR_MODEL],
             name=device_name,
@@ -218,7 +224,7 @@ class MyGasServiceCoordinatorEntity(MyGasCoordinatorEntity):
 
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, device_id)},
-            via_device=(DOMAIN, make_account_device_id(account_number)),
+            via_device_id=account_device_id(coordinator, account_number),
             manufacturer=MANUFACTURER,
             model=SERVICE_MODEL,
             name=service["name"],

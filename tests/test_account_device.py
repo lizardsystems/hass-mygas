@@ -51,16 +51,16 @@ async def test_account_device_created(
 
     # Account device should exist
     account_number = MOCK_LSPU_INFO_RESPONSE["account"]
-    account_device = device_registry.async_get_device(
-        identifiers={(DOMAIN, make_account_device_id(account_number))}
+    account_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, make_account_device_id(account_number)), mock_config_entry.entry_id
     )
     assert account_device is not None
     assert account_device.name == f"ЛС {MOCK_LSPU_INFO_RESPONSE['account']} ({MOCK_LSPU_INFO_RESPONSE['alias']})"
 
     # Counter device should also exist
     counter_uuid = MOCK_LSPU_INFO_RESPONSE["counters"][0]["uuid"]
-    counter_device = device_registry.async_get_device(
-        identifiers={(DOMAIN, make_device_id(account_number, counter_uuid))}
+    counter_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, make_device_id(account_number, counter_uuid)), mock_config_entry.entry_id
     )
     assert counter_device is not None
 
@@ -80,14 +80,14 @@ async def test_counter_device_via_device(
     device_registry = dr.async_get(hass)
 
     account_number = MOCK_LSPU_INFO_RESPONSE["account"]
-    account_device = device_registry.async_get_device(
-        identifiers={(DOMAIN, make_account_device_id(account_number))}
+    account_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, make_account_device_id(account_number)), mock_config_entry.entry_id
     )
     assert account_device is not None
 
     counter_uuid = MOCK_LSPU_INFO_RESPONSE["counters"][0]["uuid"]
-    counter_device = device_registry.async_get_device(
-        identifiers={(DOMAIN, make_device_id(account_number, counter_uuid))}
+    counter_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, make_device_id(account_number, counter_uuid)), mock_config_entry.entry_id
     )
     assert counter_device is not None
     assert counter_device.via_device_id == account_device.id
@@ -117,8 +117,8 @@ async def test_account_without_counters(
 
     # Account device should exist
     account_number = MOCK_LSPU_INFO_NO_COUNTERS["account"]
-    account_device = device_registry.async_get_device(
-        identifiers={(DOMAIN, make_account_device_id(account_number))}
+    account_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, make_account_device_id(account_number)), mock_config_entry.entry_id
     )
     assert account_device is not None
     assert account_device.name == f"ЛС {MOCK_LSPU_INFO_NO_COUNTERS['account']} ({MOCK_LSPU_INFO_NO_COUNTERS['alias']})"
@@ -235,8 +235,8 @@ async def test_find_account_by_account_device(
     device_registry = dr.async_get(hass)
 
     account_number = MOCK_LSPU_INFO_RESPONSE["account"]
-    account_device = device_registry.async_get_device(
-        identifiers={(DOMAIN, make_account_device_id(account_number))}
+    account_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, make_account_device_id(account_number)), mock_config_entry.entry_id
     )
     assert account_device is not None
 
@@ -269,8 +269,8 @@ async def test_get_bill_from_account_device(
     device_registry = dr.async_get(hass)
 
     account_number = MOCK_LSPU_INFO_RESPONSE["account"]
-    account_device = device_registry.async_get_device(
-        identifiers={(DOMAIN, make_account_device_id(account_number))}
+    account_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, make_account_device_id(account_number)), mock_config_entry.entry_id
     )
     assert account_device is not None
 
@@ -303,8 +303,8 @@ async def test_send_readings_fails_for_account_device(
     device_registry = dr.async_get(hass)
 
     account_number = MOCK_LSPU_INFO_RESPONSE["account"]
-    account_device = device_registry.async_get_device(
-        identifiers={(DOMAIN, make_account_device_id(account_number))}
+    account_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, make_account_device_id(account_number)), mock_config_entry.entry_id
     )
     assert account_device is not None
 
@@ -337,8 +337,8 @@ async def test_stale_device_removal_keeps_account_device(
         identifiers={(DOMAIN, "old_stale_device_id")},
     )
 
-    stale_device = device_registry.async_get_device(
-        identifiers={(DOMAIN, "old_stale_device_id")}
+    stale_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, "old_stale_device_id"), mock_config_entry.entry_id
     )
     assert stale_device is not None
 
@@ -347,22 +347,22 @@ async def test_stale_device_removal_keeps_account_device(
     await hass.async_block_till_done()
 
     # Stale device should be removed
-    stale_device = device_registry.async_get_device(
-        identifiers={(DOMAIN, "old_stale_device_id")}
+    stale_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, "old_stale_device_id"), mock_config_entry.entry_id
     )
     assert stale_device is None
 
     # Account device should still exist
     account_number = MOCK_LSPU_INFO_RESPONSE["account"]
-    account_device = device_registry.async_get_device(
-        identifiers={(DOMAIN, make_account_device_id(account_number))}
+    account_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, make_account_device_id(account_number)), mock_config_entry.entry_id
     )
     assert account_device is not None
 
     # Counter device should still exist
     counter_uuid = MOCK_LSPU_INFO_RESPONSE["counters"][0]["uuid"]
-    counter_device = device_registry.async_get_device(
-        identifiers={(DOMAIN, make_device_id(account_number, counter_uuid))}
+    counter_device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, make_device_id(account_number, counter_uuid)), mock_config_entry.entry_id
     )
     assert counter_device is not None
 

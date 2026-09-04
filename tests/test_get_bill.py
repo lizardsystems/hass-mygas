@@ -15,12 +15,12 @@ from custom_components.mygas.helpers import make_account_device_id
 from .const import MOCK_LSPU_INFO_NO_BALANCES, MOCK_LSPU_INFO_RESPONSE
 
 
-def _get_account_device(hass: HomeAssistant) -> dr.DeviceEntry:
+def _get_account_device(hass: HomeAssistant, entry_id: str) -> dr.DeviceEntry:
     """Return the account-level device entry."""
     device_registry = dr.async_get(hass)
     account_number = MOCK_LSPU_INFO_RESPONSE["account"]
-    device = device_registry.async_get_device(
-        identifiers={(DOMAIN, make_account_device_id(account_number))}
+    device = device_registry.async_get_device_by_identifier(
+        (DOMAIN, make_account_device_id(account_number)), entry_id
     )
     assert device is not None
     return device
@@ -43,7 +43,7 @@ async def test_get_bill_no_date_uses_balances(
     await hass.async_block_till_done()
 
     coordinator = mock_config_entry.runtime_data
-    device = _get_account_device(hass)
+    device = _get_account_device(hass, mock_config_entry.entry_id)
 
     result = await coordinator.async_get_bill(device.id)
     assert result is not None
@@ -73,7 +73,7 @@ async def test_get_bill_no_date_empty_balances_fallback(
     await hass.async_block_till_done()
 
     coordinator = mock_config_entry.runtime_data
-    device = _get_account_device(hass)
+    device = _get_account_device(hass, mock_config_entry.entry_id)
 
     result = await coordinator.async_get_bill(device.id)
     assert result is not None
@@ -104,7 +104,7 @@ async def test_get_bill_with_explicit_date(
     await hass.async_block_till_done()
 
     coordinator = mock_config_entry.runtime_data
-    device = _get_account_device(hass)
+    device = _get_account_device(hass, mock_config_entry.entry_id)
 
     explicit_date = date(2025, 6, 15)
     result = await coordinator.async_get_bill(device.id, bill_date=explicit_date)
@@ -136,7 +136,7 @@ async def test_get_bill_service_with_email(
     await hass.config_entries.async_setup(mock_config_entry.entry_id)
     await hass.async_block_till_done()
 
-    device = _get_account_device(hass)
+    device = _get_account_device(hass, mock_config_entry.entry_id)
 
     await hass.services.async_call(
         DOMAIN,

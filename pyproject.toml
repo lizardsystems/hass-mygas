@@ -4,7 +4,7 @@ version = "2.1.0"
 description = "MyGas custom integration for Home Assistant"
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 keywords = [
     "gas",
     "home-assistant",
@@ -16,7 +16,6 @@ classifiers = [
     "Intended Audience :: End Users/Desktop",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: 3 :: Only",
     "Topic :: Home Automation",

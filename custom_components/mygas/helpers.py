@@ -111,6 +111,21 @@ def make_account_device_id(account_number: str) -> str:
     return slugify(f"{account_number}_account")
 
 
+def account_device_id(coordinator: MyGasCoordinator, account_number: str) -> str:
+    """Get the registry id of the account device a sub-device links to.
+
+    `via_device` is deprecated since HA 2026.9 — identifiers are no longer unique
+    across config entries, so the account device is referenced by its registry id
+    instead. async_setup_entry registers the account devices before the platforms
+    add their entities.
+    """
+    return dr.async_get_device_id_by_identifier(
+        coordinator.hass,
+        (DOMAIN, make_account_device_id(account_number)),
+        config_entry_id=coordinator.config_entry.entry_id,
+    )
+
+
 def make_device_id(account_number: str, counter_uuid: str) -> str:
     """Get device id."""
     return slugify(f"{account_number}_{ATTR_COUNTER}_{counter_uuid}")

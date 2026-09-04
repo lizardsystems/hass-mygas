@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 from datetime import date, timedelta
 from typing import Any
 
@@ -238,6 +239,12 @@ class MyGasCoordinator(DataUpdateCoordinator):
         else:
             _lspu_accounts = _data if isinstance(_data, list) else [_data]
         return _lspu_accounts
+
+    def iter_lspu_accounts(self) -> Iterator[tuple[int, int]]:
+        """Iterate over every (account_id, lspu_account_id) pair."""
+        for account_id in self.get_accounts():
+            for lspu_account_id in range(len(self.get_lspu_accounts(account_id))):
+                yield account_id, lspu_account_id
 
     def get_counters(
         self, account_id: int, lspu_account_id: int

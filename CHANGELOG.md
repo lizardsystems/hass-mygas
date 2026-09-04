@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.5] - 2026-09-04
+
+### Fixed
+
+ - Устройства счётчиков и услуг переведены с устаревшего параметра `via_device` на `via_device_id`. В Home Assistant 2026.9 `via_device` объявлен устаревшим: идентификаторы устройств больше не уникальны между config entry. В журнале появлялись предупреждения, а в зависимости от того, находил ли Home Assistant в стеке вызовов кадр интеграции, предупреждение могло превратиться в `RuntimeError` и сущности счётчиков и услуг переставали создаваться. Та же причина вызвала потерю показаний в интеграции TNS-Энерго ([hass-tnse#15](https://github.com/lizardsystems/hass-tnse/issues/15)). Теперь устройства лицевых счетов регистрируются до настройки платформ, а счётчики и услуги ссылаются на них через `via_device_id`.
+
+### Changed
+
+ - Минимальная версия Home Assistant повышена до 2026.8.0: `via_device_id` появился именно в этой версии. Пользователям более старых версий Home Assistant остаётся доступна версия 2.1.4.
+ - Тесты переведены с устаревшего `device_registry.async_get_device` на `async_get_device_by_identifier`.
+ - CI переведён на Python 3.14, так как Home Assistant 2026.7 и новее требует Python 3.14.2. На Python 3.13 тесты запускались против устаревшей версии Home Assistant, поэтому проблема не была обнаружена заранее.
+
 ## [2.1.4] - 2026-06-01
 
 ### Fixed
