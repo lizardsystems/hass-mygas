@@ -67,7 +67,8 @@ def async_retry(
 
             if tries >= API_MAX_TRIES:
                 raise MyGasApiError(
-                    f"Failed after {API_MAX_TRIES} attempts: {func.__name__}"
+                    f"Failed after {API_MAX_TRIES} attempts: {func.__name__}: "
+                    f"{str(last_error) or type(last_error).__name__}"
                 ) from last_error
 
             _LOGGER.warning(
