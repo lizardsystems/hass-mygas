@@ -8,9 +8,9 @@ from datetime import date, timedelta
 from typing import Any
 
 from aiomygas import MyGasApi, SimpleMyGasAuth
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import SOURCE_REAUTH, ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -147,6 +147,7 @@ class MyGasCoordinator(DataUpdateCoordinator):
         else:
             _LOGGER.debug("Data updated successfully for %s", self.username)
             _LOGGER.debug("%s", new_data)
+            self._async_abort_stale_reauth_flows()
 
             return new_data
         finally:
@@ -158,6 +159,22 @@ class MyGasCoordinator(DataUpdateCoordinator):
             _LOGGER.debug(
                 "Update interval: %s hours", scan_interval_hours
             )
+
+    @callback
+    def _async_abort_stale_reauth_flows(self) -> None:
+        """Abort reauth flows left over from a failure that has since recovered.
+
+        The stored credentials just worked, so a pending "Authentication
+        expired" repair is no longer valid.
+        """
+        for flow in self.config_entry.async_get_active_flows(
+            self.hass, {SOURCE_REAUTH}
+        ):
+            _LOGGER.info(
+                "Login for %s works again, closing the pending reauth request",
+                self.username,
+            )
+            self.hass.config_entries.flow.async_abort(flow["flow_id"])
 
     async def retrieve_els_accounts_info(
         self, accounts_info: dict[str, Any]

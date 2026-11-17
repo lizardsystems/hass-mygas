@@ -1,7 +1,9 @@
 """Tests for the MyGas config flow."""
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import aiohttp
 
 import pytest
 from aiomygas.exceptions import MyGasApiError, MyGasAuthError
@@ -354,3 +356,33 @@ async def test_options_flow_set_scan_interval(
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["data"] == {CONF_SCAN_INTERVAL: 12}
     assert mock_config_entry.options[CONF_SCAN_INTERVAL] == 12
+
+
+# ---------------------------------------------------------------------------
+# Network failure during credential validation (issue #23)
+# ---------------------------------------------------------------------------
+
+
+async def test_reauth_flow_dns_failure_is_cannot_connect(
+    hass: HomeAssistant,
+    mock_config_entry: MockConfigEntry,
+) -> None:
+    """A DNS failure during login is reported as cannot_connect, not invalid_auth."""
+    mock_config_entry.add_to_hass(hass)
+    result = await mock_config_entry.start_reauth_flow(hass)
+
+    session = MagicMock()
+    session.post.side_effect = aiohttp.ClientConnectionError(
+        "DNS server returned general failure"
+    )
+    with patch(
+        "custom_components.mygas.config_flow.async_get_clientsession",
+        return_value=session,
+    ):
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            user_input={CONF_PASSWORD: MOCK_PASSWORD},
+        )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {"base": "cannot_connect"}

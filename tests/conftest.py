@@ -55,6 +55,10 @@ def no_retry_delay(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "custom_components.mygas.decorators.API_RETRY_DELAY", 0
     )
+    # randrange(0) raises ValueError, so the jitter is patched as well
+    monkeypatch.setattr(
+        "custom_components.mygas.decorators.randrange", lambda _: 0
+    )
 
 
 @pytest.fixture
