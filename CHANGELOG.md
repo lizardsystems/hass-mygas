@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.5.0] - 2026-11-18
+
+### Changed
+
+ - Номер версии интеграции совпадает с версией библиотеки `aiomygas` (2.5.0). Функциональных изменений по сравнению с 2.1.6 нет.
+ - Версия в `pyproject.toml` приведена к версии в `manifest.json`: там оставалось 2.1.0.
+ - Зависимость закреплена полным номером версии: `aiomygas==2.5.0` вместо `aiomygas==2.5`.
+
 ## [2.1.6] - 2026-11-17
 
 ### Fixed

@@ -13,7 +13,7 @@
     "mygas"
   ],
   "requirements": [
-    "aiomygas==2.5"
+    "aiomygas==2.5.0"
   ],
-  "version": "2.1.6"
+  "version": "2.5.0"
 }
