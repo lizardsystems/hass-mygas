@@ -1,5 +1,5 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
-[![CI](https://github.com/lizardsystems/hass-mygas/actions/workflows/ci.yml/badge.svg)](https://github.com/lizardsystems/hass-mygas/actions/workflows/ci.yml)
+[![CI](https://github.com/ru-smarthome/hass-mygas/actions/workflows/ci.yml/badge.svg)](https://github.com/ru-smarthome/hass-mygas/actions/workflows/ci.yml)
 
 ![my_gas 1](images/logo.png)
 
@@ -7,11 +7,11 @@
 
 # Установка
 
-**Способ 1.** [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=lizardsystems&repository=hass-mygas&category=integration)
+**Способ 1.** [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=ru-smarthome&repository=hass-mygas&category=integration)
 &rarr; Установить
 
 **Способ 2.** Вручную скопируйте папку `mygas`
-из [latest release](https://github.com/lizardsystems/hass-mygas/releases/latest) в
+из [latest release](https://github.com/ru-smarthome/hass-mygas/releases/latest) в
 директорию `/config/custom_components`.
 
 После установки необходимо перегрузить Home Assistant
@@ -825,7 +825,7 @@ logger:
 
 ```
 После возникновения проблемы, пожалуйста, найдите проблему в журнале (/config/home-assistant.log) и
-создайте [запрос на исправление](https://github.com/lizardsystems/hass-mygas/issues).
+создайте [запрос на исправление](https://github.com/ru-smarthome/hass-mygas/issues).
 
 # Дополнительная информация
 

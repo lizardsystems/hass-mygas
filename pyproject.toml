@@ -23,13 +23,13 @@ classifiers = [
 ]
 
 [[project.authors]]
-name = "LizardSystems"
+name = "ru-smarthome"
 
 [project.urls]
-Repository = "https://github.com/lizardsystems/hass-mygas"
-Documentation = "https://github.com/lizardsystems/hass-mygas"
-"Bug Tracker" = "https://github.com/lizardsystems/hass-mygas/issues"
-Changelog = "https://github.com/lizardsystems/hass-mygas/blob/main/CHANGELOG.md"
+Repository = "https://github.com/ru-smarthome/hass-mygas"
+Documentation = "https://github.com/ru-smarthome/hass-mygas"
+"Bug Tracker" = "https://github.com/ru-smarthome/hass-mygas/issues"
+Changelog = "https://github.com/ru-smarthome/hass-mygas/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 test = [

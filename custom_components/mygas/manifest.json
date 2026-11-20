@@ -2,12 +2,12 @@
   "domain": "mygas",
   "name": "MyGas",
   "codeowners": [
-    "@lizardsystems"
+    "@ru-smarthome"
   ],
   "config_flow": true,
-  "documentation": "https://github.com/lizardsystems/hass-mygas",
+  "documentation": "https://github.com/ru-smarthome/hass-mygas",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/lizardsystems/hass-mygas/issues",
+  "issue_tracker": "https://github.com/ru-smarthome/hass-mygas/issues",
   "loggers": [
     "aiomygas",
     "mygas"
